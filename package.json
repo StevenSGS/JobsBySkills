@@ -2,9 +2,9 @@
   "name": "jobs-by-skills",
   "version": "1.0.0",
   "description": "Proyecto de Ambiente Web: JobsBySkills (Aplicación de busqueda y solicitud de empleo según habilidades)",
-  "main": "server.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node src/server.js"
   },
   "keywords": [],
   "contributors": [

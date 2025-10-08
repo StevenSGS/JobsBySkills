@@ -21,7 +21,7 @@ fi
 echo "Iniciando servicios en segundo plano..."
 docker-compose up --build -d
 
-echo "Mostrando logs... Presiona Ctrl+C para detener y limpiar todo."
+echo "Mostrando logs..."
 docker-compose logs -f
 
 echo ""
