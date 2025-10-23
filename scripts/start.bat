@@ -89,6 +89,7 @@ for /f "tokens=*" %%i in ('docker-compose ps ^| findstr "Up" 2^>nul') do (
 
 
 :run_serv
+cls
 echo Servidor esta en ejecucion en: http://localhost:3000
 echo.
 echo [1] Continuar Ejecutando...

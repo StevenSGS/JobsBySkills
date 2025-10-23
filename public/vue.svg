@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 261.76 226.77">
+  <defs>
+    <linearGradient id="a" x1="130.88" y1="226.77" x2="130.88" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#41b883"/>
+      <stop offset="1" stop-color="#34495e"/>
+    </linearGradient>
+  </defs>
+  <title>Vue.js_Logo_2</title>
+  <g id="Layer_2" data-name="Layer 2">
+    <g id="Layer_1-2" data-name="Layer 1">
+      <path d="M261.76,0,130.88,226.77,0,0H51.76L130.88,134.2,210,0Z" fill="url(#a)"/>
+      <polygon points="0 0 130.88 226.77 261.76 0 210 0 130.88 134.2 51.76 0 0 0" fill="#41b883"/>
+      <polygon points="51.76 0 130.88 134.2 210 0 130.88 0 130.88 0 51.76 0" fill="#34495e"/>
+    </g>
+  </g>
+</svg>

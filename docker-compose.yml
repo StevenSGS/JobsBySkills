@@ -14,9 +14,14 @@ services:
       DB_PASSWORD: YourStrong(!)Password
       DB_DATABASE: jobsbyskills
       DB_PORT: 1433
-      DB_INIT_SCRIPT: ${DB_INIT_SCRIPT}
+      DB_INIT_SCRIPT: ${DB_INIT_SCRIPT:-}
+      NODE_ENV: development
     volumes:
       - ./database:/usr/src/app/database
+      - ./src:/usr/src/app/src
+      - ./index.html:/usr/src/app/index.html
+      - ./vite.config.js:/usr/src/app/vite.config.js
+      - ./public:/usr/src/app/public
 
   database:
     image: "mcr.microsoft.com/mssql/server:2019-latest"
