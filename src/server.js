@@ -1,7 +1,11 @@
-const express = require('express');
-const sql = require('mssql');
-const fs = require('fs');
+import express from 'express';
+import sql from 'mssql';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createServer as createViteServer } from 'vite';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = 3000;
 
@@ -88,11 +92,7 @@ const initializeDatabase = async () => {
     }
 };
 
-app.get('/', async (req, res) => {
-    res.send('Servidor JobsBySkills activo.');
-});
-
-app.get('/db-test', async (req, res) => {
+app.get('/api/db-test', async (req, res) => {
     if (!dbConnection || !dbConnection.connected) {
         return res.status(500).send('La conexion a la base de datos no esta activa.');
     }
@@ -124,12 +124,29 @@ app.get('/db-test', async (req, res) => {
     }
 });
 
-const startServer = async () => {
+async function startServer() {
     try {
         console.log('Iniciando...');
         await ensureDbExists();
         await connectWithRetry();
         await initializeDatabase();
+
+        if (process.env.NODE_ENV !== 'production') {
+            const vite = await createViteServer({
+                server: { middlewareMode: true },
+                appType: 'custom'
+            });
+            app.use(vite.middlewares);
+        } else {
+            app.use(express.static(path.resolve(__dirname, '../dist')));
+        }
+        
+        app.use('*', (req, res, next) => {
+            if (req.originalUrl.startsWith('/api')) {
+                return next();
+            }
+            res.sendFile(path.resolve(__dirname, '..', 'index.html'));
+        });
 
         app.listen(port, () => {
             console.log(`Servidor activo en http://localhost:${port}`);
@@ -137,9 +154,9 @@ const startServer = async () => {
         });
 
     } catch (err) {
-        console.error('No se pudo conectar o inicializar la base de datos. El servidor no se puede iniciar.');
+        console.error('No se pudo conectar o inicializar la base de datos o iniciar el servidor de desarrollo. El servidor no se puede iniciar.', err);
         process.exit(1);
     }
-};
+}
 
 startServer();

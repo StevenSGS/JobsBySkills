@@ -19,6 +19,7 @@ then
 fi
 
 if docker-compose ps 2>/dev/null | grep -q "Up"; then
+    clear
     echo "Servidor esta en ejecucion en: http://localhost:3000"
     echo
     echo "[1] Continuar Ejecutando..."
