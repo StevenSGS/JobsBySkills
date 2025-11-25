@@ -18,7 +18,7 @@ El estado actual del proyecto es una base sólida y bien configurada, lista para
 
 - ⚙️ **Backend Preparado:** Un servidor **Node.js + Express** está activo y conectado a la base de datos, sirviendo como el núcleo de la futura API.
 
-- 🎨 **Frontend Interactivo:** Una interfaz de usuario con **Vue.js** y **Vite** está integrada, permitiendo un desarrollo visual y dinámico con recarga en caliente (hot-reloading).
+- 🎨 **Frontend Interactivo:** La interfaz de usuario, desarrollada con **Vue.js** y **Vite**, ha alcanzado una etapa de completitud visual. Se ha implementado **Vue Router** para la navegación y un **Store** global para la gestión de cuentas y perfiles, permitiendo un desarrollo dinámico con recarga en caliente (hot-reloading).
 
 - 🗃️ **Base de Datos Dinámica:** Al iniciar el entorno por primera vez, un menú interactivo permite elegir con qué conjunto de datos (por defecto o personalizados) inicializar la base de datos **SQL Server**.
 
@@ -49,13 +49,13 @@ Este es el comienzo. La infraestructura está lista, pero el camino para convert
 - [X] Sistema de scripts para una inicialización de la base de datos seleccionable.
 - [X] Entorno de desarrollo dockerizado.
 - [X] Scripts de gestión para iniciar, reiniciar y detener el entorno.
-- [X] Base del frontend con Vue.js y Vite integrada y lista para el desarrollo.
+- [X] Frontend funcional con la estructura visual y navegación principal completas, usando Vue.js, Vite y Vue-Router.
 
 ### 📝 Lo que falta (Próximos Pasos):
 
 - [ ] **Desarrollo de la API REST:** Crear los endpoints para gestionar `Usuarios`, `Trabajos`, `Habilidades`, etc. (ej. `GET /jobs`, `POST /users/skills`).
 - [ ] **Autenticación y Autorización:** Implementar un sistema de registro e inicio de sesión (ej. con JWT).
-- [ ] **Desarrollo del Frontend:** Construir las diferentes vistas y componentes de la interfaz de usuario sobre la base ya establecida.
+- [ ] **Integración Frontend-Backend:** Conectar la interfaz de usuario con la API REST para mostrar datos dinámicos.
 - [ ] **Lógica de "Matching":** Diseñar e implementar el algoritmo que conecte las habilidades de los usuarios con los requisitos de los trabajos.
 - [ ] **Pruebas (Testing):** Añadir pruebas unitarias y de integración para asegurar la calidad del código.
 
