@@ -94,7 +94,7 @@ export default {
         {
           id: 1,
           name: 'Tech Solutions S.A.',
-          logo: '/view/company/tech-solutions.png',
+          logo: '/img/tech-solutions.png',
           location: 'San José, Costa Rica',
           industry: 'Tecnología y Desarrollo de Software',
           website: 'https://techsolutions.example.com',

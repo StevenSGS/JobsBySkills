@@ -170,13 +170,13 @@ export default {
   font-size: 1.1rem;
 }
 
-.post-body>>>h3 {
+.post-body :deep(h3) {
   font-size: 1.5rem;
   margin-top: 2rem;
   margin-bottom: 1rem;
 }
 
-.post-body>>>p {
+.post-body :deep(p) {
   margin-bottom: 1rem;
 }
 
