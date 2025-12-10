@@ -10,7 +10,7 @@
 
       <div class="profile-info-section">
         <h3>Información Personal</h3>
-        <p><strong>Nombre:</strong> Usuario</p>
+        <p><strong>Nombre:</strong> {{ user.name }}</p>
         <p><strong>Correo Electrónico:</strong> {{ user.email }}</p>
       </div>
 
@@ -46,6 +46,7 @@
 <script>
 import BaseCard from '../components/BaseCard.vue';
 import BaseButton from '../components/BaseButton.vue';
+import authStore from '../store/authStore';
 
 export default {
   name: 'ProfileView',
@@ -56,16 +57,35 @@ export default {
   data() {
     return {
       user: {
-        name: 'Usuario',
-        email: 'usuario@example.com',
-        skills: ['Vue.js', 'JavaScript', 'HTML', 'CSS', 'Node.js', 'SQL'],
+        name: '',
+        email: '',
+        skills: [],
       },
-      applications: [
-        { id: 1, jobTitle: 'Desarrollador Frontend Vue.js', company: 'Tech Solutions', date: '10/11/2025', status: 'En Revisión' },
-        { id: 2, jobTitle: 'Ingeniero de Backend Node.js', company: 'Global Innovations', date: '05/11/2025', status: 'Entrevista' },
-        { id: 3, jobTitle: 'Diseñador UX/UI Senior', company: 'Creative Agency', date: '01/11/2025', status: 'Rechazado' },
-      ],
+      applications: [],
     };
+  },
+  async mounted() {
+    const userId = authStore.state.userData?.id;
+    
+    if (!userId) {
+      this.$router.push('/login');
+      return;
+    }
+    
+    try {
+      const [userRes, appsRes] = await Promise.all([
+        fetch(`/api/users/${userId}`),
+        fetch(`/api/applications/user/${userId}`)
+      ]);
+      if (userRes.ok) {
+        this.user = await userRes.json();
+      }
+      if (appsRes.ok) {
+        this.applications = await appsRes.json();
+      }
+    } catch (err) {
+      console.error('Error loading profile:', err);
+    }
   },
 };
 </script>
@@ -165,16 +185,16 @@ export default {
 }
 
 .status-tag.en {
-  background-color: #007bff; /* Azul */
+  background-color: #007bff;
 }
 
 .status-tag.entrevista {
-  background-color: #ffc107; /* Amarillo */
+  background-color: #ffc107;
   color: #333;
 }
 
 .status-tag.rechazado {
-  background-color: #dc3545; /* Rojo */
+  background-color: #dc3545; 
 }
 
 .no-applications-message {

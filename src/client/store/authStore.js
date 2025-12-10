@@ -1,41 +1,94 @@
-import { reactive, readonly } from 'vue';
+import { reactive } from 'vue';
 
 const state = reactive({
-  isLoggedIn: false,
-  userType: null,
-  userData: null,
+  state: {
+    isAuthenticated: false,
+    userType: null,
+    userData: null
+  },
+  
+  inactivityTimer: null,
+  timeoutMinutes: 30,
 });
 
 const methods = {
-  login(type, data) {
-    state.isLoggedIn = true;
-    state.userType = type;
-    state.userData = data;
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userType', type);
-    localStorage.setItem('userData', JSON.stringify(data));
+  login(userData) {
+    state.state.isAuthenticated = true;
+    state.state.userType = userData.userType;
+    state.state.userData = userData;
+    
+    localStorage.setItem('auth', JSON.stringify({
+      isAuthenticated: true,
+      userType: userData.userType,
+      userData: userData
+    }));
+    
+    this.startInactivityTimer();
   },
+
   logout() {
-    state.isLoggedIn = false;
-    state.userType = null;
-    state.userData = null;
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userType');
-    localStorage.removeItem('userData');
+    state.state.isAuthenticated = false;
+    state.state.userType = null;
+    state.state.userData = null;
+    
+    localStorage.removeItem('auth');
+    if (state.inactivityTimer) clearTimeout(state.inactivityTimer);
+    
+    window.location.href = '/login'; 
   },
+
   initializeStore() {
-    const loggedIn = localStorage.getItem('isLoggedIn');
-    const type = localStorage.getItem('userType');
-    const data = localStorage.getItem('userData');
-    if (loggedIn === 'true' && type && data) {
-      state.isLoggedIn = true;
-      state.userType = type;
-      state.userData = JSON.parse(data);
+    const savedAuth = localStorage.getItem('auth');
+    if (savedAuth) {
+      try {
+        const { isAuthenticated, userType, userData } = JSON.parse(savedAuth);
+        if (isAuthenticated) {
+          state.state.isAuthenticated = isAuthenticated;
+          state.state.userType = userType;
+          state.state.userData = userData;
+          this.startInactivityTimer();
+        }
+      } catch (e) {
+        console.error('Error parsing auth:', e);
+        localStorage.removeItem('auth');
+      }
+    }
+    
+    this.setupActivityListeners();
+  },
+
+  setupActivityListeners() {
+    const resetTimer = () => this.resetInactivityTimer();
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keydown', resetTimer);
+    window.addEventListener('click', resetTimer);
+    window.addEventListener('scroll', resetTimer);
+  },
+
+  startInactivityTimer() {
+    if (state.inactivityTimer) clearTimeout(state.inactivityTimer);
+    if (!state.state.isAuthenticated) return;
+
+    state.inactivityTimer = setTimeout(() => {
+      this.handleSessionTimeout();
+    }, state.timeoutMinutes * 60 * 1000);
+  },
+
+  resetInactivityTimer() {
+    if (state.state.isAuthenticated) {
+      this.startInactivityTimer();
+    }
+  },
+
+  handleSessionTimeout() {
+    if (state.state.isAuthenticated) {
+      alert('Tu sesión ha expirado por inactividad.');
+      this.logout();
     }
   }
 };
 
 export default {
-  state: readonly(state),
+  state: state.state,
   methods,
 };

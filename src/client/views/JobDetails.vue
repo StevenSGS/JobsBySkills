@@ -71,56 +71,17 @@ export default {
         alert('¡Te has postulado a este empleo!');
       }
     },
-    fetchJobDetails(jobId) {
-      const allJobs = [
-        {
-          id: 1,
-          title: 'Desarrollador Frontend Vue.js',
-          company: 'Tech Solutions',
-          companyId: 101,
-          location: 'Remoto',
-          description: 'Buscamos un desarrollador Frontend experimentado en Vue.js para unirse a nuestro equipo dinámico. Serás responsable de construir y mantener la interfaz de usuario de nuestras aplicaciones web.',
-          requirements: [
-            'Experiencia demostrable con Vue.js (Vue 2/3)',
-            'Dominio de JavaScript, HTML5 y CSS3',
-            'Conocimiento de herramientas de construcción como Webpack o Vite',
-            'Experiencia con API RESTful',
-            'Capacidad para trabajar en equipo y de forma autónoma',
-          ],
-          skills: ['Vue.js', 'JavaScript', 'HTML', 'CSS', 'API REST', 'Git'],
-        },
-        {
-          id: 2,
-          title: 'Ingeniero de Backend Node.js',
-          company: 'Global Innovations',
-          companyId: 102,
-          location: 'Madrid, España',
-          description: 'Únete a nuestro equipo de backend para desarrollar y mantener servicios escalables utilizando Node.js. Trabajarás en la arquitectura de microservicios y bases de datos NoSQL.',
-          requirements: [
-            'Experiencia sólida con Node.js y Express.js',
-            'Conocimiento de bases de datos (MongoDB, PostgreSQL)',
-            'Experiencia con Docker y microservicios',
-            'Familiaridad con metodologías ágiles',
-          ],
-          skills: ['Node.js', 'Express', 'MongoDB', 'SQL', 'Docker', 'AWS'],
-        },
-        {
-          id: 3,
-          title: 'Diseñador UX/UI Senior',
-          company: 'Creative Agency',
-          companyId: 103,
-          location: 'Barcelona, España',
-          description: 'Estamos buscando un Diseñador UX/UI Senior para liderar el diseño de experiencias de usuario intuitivas y atractivas para nuestros productos digitales.',
-          requirements: [
-            'Portafolio sólido demostrando experiencia en UX/UI',
-            'Dominio de herramientas de diseño (Figma, Sketch, Adobe XD)',
-            'Experiencia en investigación de usuarios y pruebas de usabilidad',
-            'Conocimiento de principios de diseño centrado en el usuario',
-          ],
-          skills: ['Figma', 'Sketch', 'UX Research', 'Prototipado', 'Diseño de Interacción'],
-        },
-      ];
-      this.job = allJobs.find(j => j.id == jobId);
+    async fetchJobDetails(jobId) {
+      try {
+        const res = await fetch(`/api/jobs/${jobId}`);
+        if (res.ok) {
+          this.job = await res.json();
+        } else {
+          console.error('Job not found');
+        }
+      } catch (err) {
+        console.error('Error loading job details:', err);
+      }
     },
   },
 };

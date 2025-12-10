@@ -4,10 +4,13 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
+import apiRoutes from './api/routes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = 3000;
+
+app.use(express.json());
 
 const dbConfig = {
     user: process.env.DB_USER,
@@ -130,6 +133,8 @@ async function startServer() {
         await ensureDbExists();
         await connectWithRetry();
         await initializeDatabase();
+
+        app.use('/api', apiRoutes);
 
         if (process.env.NODE_ENV !== 'production') {
             const vite = await createViteServer({

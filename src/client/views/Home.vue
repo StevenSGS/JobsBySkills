@@ -58,13 +58,21 @@ export default {
   },
   data() {
     return {
-      featuredJobs: [
-        { id: 1, title: 'Desarrollador Frontend Vue.js', company: 'Tech Solutions', location: 'Remoto', skills: ['Vue.js', 'JavaScript'] },
-        { id: 2, title: 'Ingeniero de Backend Node.js', company: 'Global Innovations', location: 'Madrid, España', skills: ['Node.js', 'Express'] },
-        { id: 3, title: 'Diseñador UX/UI Senior', company: 'Creative Agency', location: 'Barcelona, España', skills: ['Figma', 'UX Research'] },
-      ],
-      popularSkills: ['JavaScript', 'Python', 'React', 'Vue.js', 'Node.js', 'SQL', 'Diseño UX/UI', 'Marketing Digital', 'Project Management'],
+      featuredJobs: [],
+      popularSkills: [],
     };
+  },
+  async mounted() {
+    try {
+      const [jobsRes, skillsRes] = await Promise.all([
+        fetch('/api/jobs/featured'),
+        fetch('/api/skills/popular')
+      ]);
+      this.featuredJobs = await jobsRes.json();
+      this.popularSkills = await skillsRes.json();
+    } catch (err) {
+      console.error('Error loading data:', err);
+    }
   },
 };
 </script>

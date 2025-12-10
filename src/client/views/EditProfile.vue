@@ -75,6 +75,7 @@
 import InputField from '../components/InputField.vue';
 import BaseButton from '../components/BaseButton.vue';
 import BaseCard from '../components/BaseCard.vue';
+import authStore from '../store/authStore';
 
 export default {
   name: 'EditProfileView',
@@ -86,9 +87,9 @@ export default {
   data() {
     return {
       user: {
-        name: 'Ryan Smith',
-        email: 'RyanSmith@Dev.com',
-        skills: ['Vue.js', 'JavaScript'],
+        name: '',
+        email: '',
+        skills: [],
       },
       passwords: {
         current: '',
@@ -98,14 +99,58 @@ export default {
       skillsInput: '',
     };
   },
-  created() {
-    this.skillsInput = this.user.skills.join(', ');
+  async mounted() {
+    const userId = authStore.state.userData?.id;
+    
+    if (!userId) {
+      this.$router.push('/login');
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/users/${userId}`);
+      if (res.ok) {
+        const userData = await res.json();
+        this.user.name = userData.name;
+        this.user.email = userData.email;
+        this.user.skills = userData.skills || [];
+        this.skillsInput = this.user.skills.join(', ');
+      }
+    } catch (err) {
+      console.error('Error loading user:', err);
+    }
   },
   methods: {
-    saveProfile() {
-      this.user.skills = this.skillsInput.split(',').map(s => s.trim()).filter(s => s);
-      alert('Perfil actualizado (simulado)');
-      this.$router.push('/profile');
+    async saveProfile() {
+      const userId = authStore.state.userData?.id;
+      
+      if (!userId) {
+        this.$router.push('/login');
+        return;
+      }
+      
+      const skills = this.skillsInput.split(',').map(s => s.trim()).filter(s => s);
+      const [firstName, ...lastNameParts] = this.user.name.split(' ');
+      const lastName = lastNameParts.join(' ');
+      
+      try {
+        const res = await fetch(`/api/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firstName,
+            lastName,
+            email: this.user.email,
+            skills
+          })
+        });
+        
+        if (res.ok) {
+          alert('Perfil actualizado correctamente');
+        }
+      } catch (err) {
+        console.error('Error updating profile:', err);
+      }
     },
     changePassword() {
       alert('Contraseña cambiada (simulado)');

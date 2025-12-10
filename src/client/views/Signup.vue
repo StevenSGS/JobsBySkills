@@ -2,6 +2,11 @@
   <div class="signup-view container">
     <BaseCard class="signup-card">
       <h2>Registro</h2>
+      
+      <div v-if="error" class="error-box">
+        {{ error }}
+      </div>
+
       <form @submit.prevent="handleSignup">
         <InputField
           id="name"
@@ -63,12 +68,53 @@ export default {
       email: '',
       password: '',
       confirmPassword: '',
+      error: '',
+      isLoading: false,
     };
   },
   methods: {
-    handleSignup() {
-      authStore.methods.login('client', { email: this.email, name: this.name });
-      this.$router.push('/');
+    async handleSignup() {
+      if (this.password !== this.confirmPassword) {
+        this.error = 'Las contraseñas no coinciden';
+        return;
+      }
+
+      this.isLoading = true;
+      this.error = '';
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            firstName: this.name.split(' ')[0] || this.name, 
+            lastName: this.name.split(' ').slice(1).join(' ') || 'User',
+            email: this.email,
+            password: this.password,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Error al registrarse');
+        }
+
+        authStore.methods.login({
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          userType: 'client'
+        });
+
+        this.$router.push('/');
+      } catch (err) {
+        this.error = err.message;
+      } finally {
+        this.isLoading = false;
+      }
     },
   },
 };
@@ -104,5 +150,16 @@ export default {
   margin-top: 1.5rem;
   font-size: 0.9rem;
   color: var(--color-text);
+}
+
+.error-box {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-left: 4px solid #f44;
+  color: #c33;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  text-align: left;
 }
 </style>

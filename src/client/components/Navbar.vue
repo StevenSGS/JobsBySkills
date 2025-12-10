@@ -3,15 +3,23 @@
     <div class="container navbar-container">
       <div class="navbar-left">
         <router-link to="/" class="navbar-brand">JobsBySkills</router-link>
-        <div class="navbar-menu">
-          <router-link v-if="authStore.state.userType === 'company'" to="/company/requests">Solicitudes</router-link>
-          <router-link v-else to="/jobs">Buscar Empleos</router-link>
-
-          <router-link v-if="authStore.state.userType === 'company'" to="/clients">Para Clientes</router-link>
-          <router-link v-else to="/companies">Para Empresas</router-link>
+        <nav class="nav-links">
+          <router-link to="/company/requests" class="nav-link" v-if="userType === 'company'">Mis Solicitudes</router-link>
           
-          <router-link to="/blog">Blog</router-link>
-        </div>
+          <template v-if="userType === 'admin'">
+             <router-link to="/admin" class="nav-link">Dashboard</router-link>
+             <router-link to="/admin" class="nav-link">Usuarios</router-link>
+             <router-link to="/admin" class="nav-link">Empleos</router-link>
+             <router-link to="/admin" class="nav-link">Contenido</router-link>
+          </template>
+
+          <router-link to="/" class="nav-link" v-if="userType === 'client' || !isLoggedIn">Inicio</router-link>
+          <router-link to="/jobs" class="nav-link" v-if="userType === 'client' || !isLoggedIn">Empleos</router-link>
+          <router-link to="/blog" class="nav-link" v-if="userType !== 'admin'">Blog</router-link>
+          <router-link to="/about" class="nav-link" v-if="userType !== 'admin'">Acerca de</router-link>
+          <router-link to="/companies" class="nav-link" v-if="(!isLoggedIn || userType === 'client') && userType !== 'admin'">Para Empresas</router-link>
+          <router-link to="/clients" class="nav-link" v-if="(!isLoggedIn || userType === 'company') && userType !== 'admin'">Para Clientes</router-link>
+        </nav>
       </div>
 
       <div class="navbar-center">
@@ -27,15 +35,24 @@
           <img v-else src="/icons/moon.svg" alt="Dark Mode" />
         </button>
 
-        <template v-if="authStore.state.isLoggedIn">
-          <router-link :to="accountLink" class="icon-button">
-            <img src="/icons/account.svg" alt="Cuenta" />
+        <template v-if="isLoggedIn">
+          <router-link :to="accountLink" class="account-link" v-if="userType !== 'admin'">
+            <img src="/icons/account.svg" alt="Cuenta" class="account-icon" />
+            <span>{{ accountName }}</span>
           </router-link>
+          <div class="account-display" v-else>
+            <img src="/icons/account.svg" alt="Admin" class="account-icon" />
+            <span>{{ accountName }}</span>
+          </div>
           <BaseButton type="secondary" @click="handleLogout">Cerrar Sesión</BaseButton>
         </template>
         <template v-else>
-          <router-link to="/login" class="button-secondary">Iniciar Sesión</router-link>
-          <router-link to="/signup" class="button-primary">Registro</router-link>
+          <router-link to="/login">
+            <BaseButton type="secondary">Iniciar Sesión</BaseButton>
+          </router-link>
+          <router-link to="/signup">
+            <BaseButton type="primary">Registrarse</BaseButton>
+          </router-link>
         </template>
       </div>
     </div>
@@ -57,12 +74,33 @@ export default {
     };
   },
   computed: {
-    authStore() {
-      return authStore;
+    authState() {
+      return authStore.state;
+    },
+    authStoreState() {
+      return authStore.state;
+    },
+    userType() {
+      return authStore.state.userType;
+    },
+    isLoggedIn() {
+      return authStore.state.isAuthenticated;
+    },
+    accountName() {
+      if (this.userType === 'company') {
+        return this.authState.userData?.companyName || 'Empresa';
+      } else if (this.userType === 'admin') {
+        return 'Administrador';
+      }
+      return this.authState.userData?.name || 'Usuario';
     },
     accountLink() {
-      return this.authStore.state.userType === 'client' ? '/profile' : '/company/dashboard';
-    }
+      if (this.userType === 'company') {
+        const companyId = this.authState.userData?.id || 1;
+        return `/company/profile/${companyId}`;
+      }
+      return '/profile';
+    },
   },
   mounted() {
     const savedTheme = localStorage.getItem('theme');
@@ -86,7 +124,7 @@ export default {
       }
     },
     handleLogout() {
-      this.authStore.methods.logout();
+      authStore.methods.logout();
       this.$router.push('/');
     }
   }
@@ -111,10 +149,16 @@ export default {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  flex-shrink: 1;
+}
+
+.navbar-right {
+  min-width: fit-content;
 }
 
 .navbar-center {
   flex-grow: 1;
+  flex-shrink: 1;
   display: flex;
   justify-content: center;
   padding: 0 2rem;
@@ -124,22 +168,37 @@ export default {
   font-weight: bold;
   font-size: 1.5rem;
   color: var(--color-text);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.navbar-menu {
+.nav-links {
   display: flex;
   gap: 1.5rem;
+  align-items: center;
+  flex-shrink: 1;
+  overflow: hidden;
 }
 
-.navbar-menu a {
+.nav-link {
   font-weight: 500;
   color: var(--color-text);
+  text-decoration: none;
+  transition: color 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nav-link:hover {
+  color: var(--color-primary);
 }
 
 .search-bar-nav {
   display: flex;
   width: 100%;
   max-width: 400px;
+  min-width: 250px;
 }
 
 .search-bar-nav input {
@@ -167,6 +226,7 @@ export default {
   align-items: center;
   justify-content: center;
   color: var(--color-text);
+  flex-shrink: 0;
 }
 
 .theme-switcher img {
@@ -174,29 +234,25 @@ export default {
   height: 100%;
 }
 
-.icon-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
+.account-link, .account-display {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.5rem;
   color: var(--color-text);
-}
-
-.icon-button img {
-  width: 100%;
-  height: 100%;
-  filter: invert(var(--color-text-filter-value, 0));
-}
-
-.button-primary, .button-secondary {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+  text-decoration: none;
   font-weight: 500;
-  text-align: center;
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.account-link:hover {
+  color: var(--color-primary);
+}
+
+.account-icon {
+  width: 24px;
+  height: 24px;
+  filter: invert(var(--color-text-filter-value, 0));
+  flex-shrink: 0;
 }
 </style>

@@ -1,14 +1,19 @@
 <template>
-  <div class="login-view container">
+  <div class="company-login-view container">
     <BaseCard class="login-card">
-      <h2>Iniciar Sesión (Empresas)</h2>
-      <form @submit.prevent="handleLogin">
+      <h2>Iniciar Sesión - Empresa</h2>
+      
+      <div v-if="errorMessage" class="error-box">
+        {{ errorMessage }}
+      </div>
+
+      <form @submit.prevent="handleLogin" class="login-form">
         <InputField
           id="email"
           label="Correo Electrónico"
-          type="email"
+          type="text"
           v-model="email"
-          placeholder="contacto@tuempresa.com"
+          placeholder="empresa@correo.com"
           required
         />
         <InputField
@@ -19,10 +24,11 @@
           placeholder="********"
           required
         />
-        <BaseButton type="primary" @click="handleLogin">Iniciar Sesión</BaseButton>
+        <BaseButton type="primary">Iniciar Sesión</BaseButton>
       </form>
-      <p class="alt-action">
-        ¿No tienes cuenta de empresa? <router-link to="/company/signup">Regístrate aquí</router-link>
+
+      <p class="signup-link">
+        ¿No tienes cuenta? <router-link to="/company/signup">Regístrate aquí</router-link>
       </p>
     </BaseCard>
   </div>
@@ -45,47 +51,98 @@ export default {
     return {
       email: '',
       password: '',
+      errorMessage: '',
     };
   },
   methods: {
-    handleLogin() {
-      authStore.methods.login('company', { companyName: 'Mi Empresa S.A.', email: this.email });
-      this.$router.push('/company/requests');
+    async handleLogin() {
+      this.errorMessage = '';
+      
+      if (!this.email || !this.password) {
+        this.errorMessage = 'Por favor completa todos los campos.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/companies/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: this.email,
+            password: this.password
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          this.errorMessage = data.error || 'Error al iniciar sesión.';
+          return;
+        }
+
+        if (data.userType === 'admin') {
+          authStore.methods.login(data);
+        } else {
+          authStore.methods.login(data);
+        }
+        
+        this.$router.push('/company/requests');
+      } catch (err) {
+        this.errorMessage = 'Error de conexión. Intenta nuevamente.';
+        console.error('Login error:', err);
+      }
     },
   },
 };
 </script>
 
 <style scoped>
-
-.login-view {
+.company-login-view {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2rem 0;
+  min-height: calc(100vh - var(--navbar-height, 4rem));
 }
 
 .login-card {
   max-width: 400px;
   width: 100%;
-  text-align: center;
+  padding: 2rem;
 }
 
 .login-card h2 {
   font-size: 2rem;
   margin-bottom: 1.5rem;
+  text-align: center;
   color: var(--color-text);
 }
 
-.login-card form {
+.error-box {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-left: 4px solid #f44;
+  color: #c33;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.login-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.login-card .alt-action {
+.signup-link {
+  text-align: center;
   margin-top: 1.5rem;
-  font-size: 0.9rem;
   color: var(--color-text);
+}
+
+.signup-link a {
+  color: var(--color-primary);
+  font-weight: 500;
 }
 </style>

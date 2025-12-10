@@ -8,13 +8,6 @@
     
     <BaseCard v-else-if="company">
       <div class="company-header">
-        <div v-if="company.logo" class="company-logo-wrapper">
-          <img
-            :src="company.logo"
-            :alt="company.name + 'logo'"
-            class="company-logo"
-          />
-        </div>
         <div class="company-header-text">
           <h1>{{ company.name }}</h1>
           <p class="company-location">{{ company.location }}</p>
@@ -40,7 +33,7 @@
         <p>{{ company.description }}</p>
       </div>
 
-      <div class="company-extra-info" v-if="company.values && company.values.length">
+      <div class="company-extra-info" v-if="company.values && company.values.length > 0">
         <h3>Nuestros Valores</h3>
         <ul>
           <li v-for="(value, index) in company.values" :key="index">
@@ -89,93 +82,34 @@ export default {
     return {
       isLoading: true,
       company: null,
-  
-      allCompanies: [
-        {
-          id: 1,
-          name: 'Tech Solutions S.A.',
-          logo: '/img/tech-solutions.png',
-          location: 'San José, Costa Rica',
-          industry: 'Tecnología y Desarrollo de Software',
-          website: 'https://techsolutions.example.com',
-          size: '51 - 200 colaboradores',
-          founded: 2018,
-          description:
-            'Tech Solutions S.A. desarrolla soluciones digitales a la medida para empresas de distintos sectores, con un enfoque en calidad, innovación y metodologías ágiles.',
-          values: [
-            'Innovación continua',
-            'Trabajo en equipo',
-            'Calidad en cada entrega',
-          ],
-        },
-        {
-          id: 2,
-          name: 'LogiPro Logistics',
-          logo: '/images/companies/logipro.svg',
-          location: 'Heredia, Costa Rica',
-          industry: 'Logística y Cadena de Suministro',
-          website: 'https://logipro.example.com',
-          size: '201 - 500 colaboradores',
-          founded: 2012,
-          description:
-            'LogiPro Logistics se especializa en soluciones logísticas integrales, optimizando el flujo de mercancías y la trazabilidad en toda la cadena de suministro.',
-          values: [
-            'Compromiso con el cliente',
-            'Transparencia',
-            'Responsabilidad operativa',
-          ],
-        },
-      ],
-      allJobs: [
-        {
-          id: 1,
-          title: 'Desarrollador Frontend Vue.js',
-          company: 'Tech Solutions S.A.',
-          companyId: 1,
-          location: 'Remoto - Costa Rica',
-          skills: ['Vue.js', 'JavaScript', 'CSS', 'REST APIs'],
-        },
-        {
-          id: 2,
-          title: 'QA Engineer Automatizado',
-          company: 'Tech Solutions S.A.',
-          companyId: 1,
-          location: 'Híbrido - San José',
-          skills: ['Cypress', 'Jest', 'Git', 'CI/CD'],
-        },
-        {
-          id: 3,
-          title: 'Coordinador de Operaciones Logísticas',
-          company: 'LogiPro Logistics',
-          companyId: 2,
-          location: 'Heredia, Costa Rica',
-          skills: ['Logística', 'Excel', 'Gestión de Rutas'],
-        },
-      ],
+      allJobs: [],
     };
   },
   computed: {
     companyJobs() {
-      if (!this.company) return [];
-      return this.allJobs.filter(
-        (job) => job.companyId === this.company.id
-      );
+      return this.allJobs;
     },
   },
-  created() {
-    const idFromRoute = Number(this.$route.params.id);
-    const companyId = Number.isNaN(idFromRoute) ? 1 : idFromRoute;
-
-    this.loadCompany(companyId);
+  async created() {
+    const companyId = Number(this.$route.params.id) || 1;
+    try {
+      const [companyRes, jobsRes] = await Promise.all([
+        fetch(`/api/companies/${companyId}`),
+        fetch(`/api/jobs?companyId=${companyId}`)
+      ]);
+      if (companyRes.ok) {
+        this.company = await companyRes.json();
+      }
+      if (jobsRes.ok) {
+        this.allJobs = await jobsRes.json();
+      }
+    } catch (err) {
+      console.error('Error loading company:', err);
+    } finally {
+      this.isLoading = false;
+    }
   },
   methods: {
-    loadCompany(companyId) {
-      const found = this.allCompanies.find(
-        (company) => company.id === companyId
-      );
-      this.company = found || null;
-      this.isLoading = false;
-    },
     openWebsite() {
       if (this.company && this.company.website && typeof window !== 'undefined') {
         window.open(this.company.website, '_blank');
