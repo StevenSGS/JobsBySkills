@@ -32,37 +32,16 @@ export default {
   },
   data() {
     return {
-      blogPosts: [
-        {
-          id: 1,
-          title: '5 Habilidades Clave que todo Desarrollador Frontend Necesita en 2025',
-          author: 'Ana García',
-          date: '10 Nov, 2025',
-          excerpt: 'El mundo del desarrollo frontend evoluciona rápidamente. Descubre las 5 habilidades que te mantendrán relevante y competitivo en el mercado actual.',
-        },
-        {
-          id: 2,
-          title: 'Cómo Preparar tu Perfil para Atraer a los Mejores Reclutadores',
-          author: 'Carlos Ruiz',
-          date: '05 Nov, 2025',
-          excerpt: 'Tu perfil es tu carta de presentación. Aprende a optimizarlo para que no pase desapercibido por las empresas más importantes del sector.',
-        },
-        {
-          id: 3,
-          title: 'Trabajo Remoto: Ventajas y Desafíos',
-          author: 'Sofía López',
-          date: '01 Nov, 2025',
-          excerpt: 'El trabajo remoto ha llegado para quedarse. Analizamos los pros y los contras de esta modalidad y cómo puedes adaptarte con éxito.',
-        },
-        {
-          id: 4,
-          title: 'Introducción a las Bases de Datos NoSQL para Desarrolladores SQL',
-          author: 'Javier Martín',
-          date: '28 Oct, 2025',
-          excerpt: 'Si vienes del mundo SQL, las bases de datos NoSQL pueden parecer un universo diferente. Te damos una guía de iniciación para facilitar tu transición.',
-        },
-      ],
+      blogPosts: [],
     };
+  },
+  async mounted() {
+    try {
+      const res = await fetch('/api/blog');
+      this.blogPosts = await res.json();
+    } catch (err) {
+      console.error('Error loading blog posts:', err);
+    }
   },
 };
 </script>

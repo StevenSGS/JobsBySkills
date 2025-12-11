@@ -58,6 +58,7 @@
 import BaseCard from '../../components/BaseCard.vue';
 import BaseButton from '../../components/BaseButton.vue';
 import InputField from '../../components/InputField.vue';
+import authStore from '../../store/authStore';
 
 export default {
   name: 'CompanyRequestDetailsView',
@@ -78,76 +79,90 @@ export default {
         skills: [],
       },
       skillsInput: '',
-      allRequests: [
-        {
-          id: 1,
-          title: 'Desarrollador Backend Senior',
-          status: 'Activa',
-          date: '15/11/2025',
-          description: 'Buscamos un desarrollador backend senior con experiencia en Node.js y bases de datos SQL/NoSQL para unirse a nuestro equipo de ingeniería. Será responsable del diseño, desarrollo y mantenimiento de APIs escalables.',
-          location: 'Remoto',
-          skills: ['Node.js', 'Express', 'SQL', 'MongoDB', 'AWS', 'Microservicios'],
-        },
-        {
-          id: 2,
-          title: 'Diseñador Gráfico Junior',
-          status: 'Pendiente',
-          date: '10/11/2025',
-          description: 'Oportunidad para un diseñador gráfico junior creativo y apasionado por el diseño digital. Trabajarás en la creación de material visual para campañas de marketing y redes sociales.',
-          location: 'Barcelona, España',
-          skills: ['Photoshop', 'Illustrator', 'Figma', 'Diseño Web'],
-        },
-        {
-          id: 3,
-          title: 'Especialista en Marketing Digital',
-          status: 'Cerrada',
-          date: '01/11/2025',
-          description: 'Buscamos un especialista en marketing digital con experiencia en SEO, SEM y gestión de redes sociales para potenciar nuestra presencia online.',
-          location: 'Valencia, España',
-          skills: ['SEO', 'SEM', 'Google Ads', 'Redes Sociales', 'Analytics'],
-        },
-      ],
     };
   },
   computed: {
     isNewRequest() {
-      const isNew = this.$route.params.id === 'new';
-      return isNew;
+      return this.$route.params.id === 'new';
     },
   },
-  created() {
+  async created() {
     if (!this.isNewRequest) {
       const requestId = parseInt(this.$route.params.id);
-      const foundRequest = this.allRequests.find(r => r.id === requestId);
-      if (foundRequest) {
-        this.request = { ...foundRequest };
-        this.skillsInput = this.request.skills.join(', ');
-      } else {
+      try {
+        const res = await fetch(`/api/jobs/${requestId}`);
+        if (res.ok) {
+          const job = await res.json();
+          this.request = {
+            id: job.id,
+            title: job.title,
+            status: job.status || 'Activa',
+            date: new Date().toLocaleDateString('es-ES'),
+            description: job.description,
+            location: job.location,
+            skills: job.skills || [],
+          };
+          this.skillsInput = this.request.skills.join(', ');
+        } else {
+          this.$router.push('/company/requests');
+        }
+      } catch (err) {
+        console.error('Error loading request:', err);
         this.$router.push('/company/requests');
       }
-    } else {
-      this.request = {
-        id: null,
-        title: '',
-        status: 'Pendiente',
-        date: new Date().toLocaleDateString('es-ES'),
-        description: '',
-        location: '',
-        skills: [],
-      };
-      this.skillsInput = '';
     }
   },
   methods: {
-    saveRequest() {
-      if (this.request) {
-        this.request.skills = this.skillsInput.split(',').map(s => s.trim()).filter(s => s);
+    async saveRequest() {
+      const companyId = authStore.state.userData?.id;
+      
+      if (!companyId) {
+        this.$router.push('/company/login');
+        return;
+      }
+      
+      const skills = this.skillsInput.split(',').map(s => s.trim()).filter(s => s);
+      
+      try {
         if (this.isNewRequest) {
-          alert('Nueva solicitud publicada');
+          const res = await fetch('/api/jobs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              companyId,
+              title: this.request.title,
+              description: this.request.description,
+              location: this.request.location,
+              status: this.request.status,
+              skills
+            })
+          });
+          
+          if (res.ok) {
+            alert('Solicitud creada correctamente');
+            this.$router.push('/company/requests');
+          }
         } else {
-          alert('Solicitud guardada');
+          const res = await fetch(`/api/jobs/${this.request.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              companyId,
+              title: this.request.title,
+              description: this.request.description,
+              location: this.request.location,
+              status: this.request.status,
+              skills
+            })
+          });
+          
+          if (res.ok) {
+            alert('Solicitud actualizada correctamente');
+            this.$router.push('/company/requests');
+          }
         }
-        this.$router.push('/company/requests');
+      } catch (err) {
+        console.error('Error saving request:', err);
       }
     },
     cancelEdit() {

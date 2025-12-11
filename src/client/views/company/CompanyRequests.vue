@@ -13,8 +13,8 @@
         <div v-for="request in requests" :key="request.id" class="request-item">
           <div class="request-details">
             <h3><router-link :to="{ name: 'CompanyRequestDetails', params: { id: request.id } }">{{ request.title }}</router-link></h3>
-            <p class="request-status">Estado: <span :class="['status-tag', request.status.toLowerCase()]">{{ request.status }}</span></p>
-            <p class="request-date">Publicada el: {{ request.date }}</p>
+            <p class="request-status">Estado: <span :class="['status-tag', (request.status || 'activa').toLowerCase()]">{{ request.status || 'Activa' }}</span></p>
+            <p class="request-date">Publicada el: {{ request.date || 'N/A' }}</p>
           </div>
           <div class="request-actions">
             <router-link :to="{ name: 'CompanyRequestDetails', params: { id: request.id } }">
@@ -33,6 +33,7 @@
 <script>
 import BaseCard from '../../components/BaseCard.vue';
 import BaseButton from '../../components/BaseButton.vue';
+import authStore from '../../store/authStore';
 
 export default {
   name: 'CompanyRequestsView',
@@ -42,12 +43,25 @@ export default {
   },
   data() {
     return {
-      requests: [
-        { id: 1, title: 'Desarrollador Backend Senior', status: 'Activa', date: '15/11/2025' },
-        { id: 2, title: 'Diseñador Gráfico Junior', status: 'Pendiente', date: '10/11/2025' },
-        { id: 3, title: 'Especialista en Marketing Digital', status: 'Cerrada', date: '01/11/2025' },
-      ],
+      requests: [],
     };
+  },
+  async mounted() {
+    const companyId = authStore.state.userData?.id;
+    
+    if (!companyId) {
+      this.$router.push('/company/login');
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/jobs?companyId=${companyId}`);
+      if (res.ok) {
+        this.requests = await res.json();
+      }
+    } catch (err) {
+      console.error('Error loading requests:', err);
+    }
   },
   methods: {
     publishNewRequest() {

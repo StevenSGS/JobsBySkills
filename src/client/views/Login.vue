@@ -2,13 +2,18 @@
   <div class="login-view container">
     <BaseCard class="login-card">
       <h2>Iniciar Sesión</h2>
-      <form @submit.prevent="handleLogin">
+      
+      <div v-if="errorMessage" class="error-box">
+        {{ errorMessage }}
+      </div>
+
+      <form @submit.prevent="handleLogin" class="login-form">
         <InputField
           id="email"
           label="Correo Electrónico"
-          type="email"
+          type="text"
           v-model="email"
-          placeholder="tu@ejemplo.com"
+          placeholder="tu@correo.com"
           required
         />
         <InputField
@@ -19,9 +24,10 @@
           placeholder="********"
           required
         />
-        <BaseButton type="primary" @click="handleLogin">Iniciar Sesión</BaseButton>
+        <BaseButton type="primary">Iniciar Sesión</BaseButton>
       </form>
-      <p class="alt-action">
+
+      <p class="signup-link">
         ¿No tienes cuenta? <router-link to="/signup">Regístrate aquí</router-link>
       </p>
     </BaseCard>
@@ -45,12 +51,46 @@ export default {
     return {
       email: '',
       password: '',
+      errorMessage: '',
     };
   },
   methods: {
-    handleLogin() {
-      authStore.methods.login('client', { email: this.email, name: 'Usuario Cliente' });
-      this.$router.push('/');
+    async handleLogin() {
+      this.errorMessage = '';
+      
+      if (!this.email || !this.password) {
+        this.errorMessage = 'Por favor completa todos los campos.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/users/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: this.email,
+            password: this.password
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          this.errorMessage = data.error || 'Error al iniciar sesión.';
+          return;
+        }
+
+        if (data.userType === 'admin') {
+          authStore.methods.login(data);
+          this.$router.push('/admin');
+        } else {
+          authStore.methods.login(data);
+          this.$router.push('/');
+        }
+      } catch (err) {
+        this.errorMessage = 'Error de conexión. Intenta nuevamente.';
+        console.error('Login error:', err);
+      }
     },
   },
 };
@@ -67,24 +107,42 @@ export default {
 .login-card {
   max-width: 400px;
   width: 100%;
-  text-align: center;
+  padding: 2rem;
 }
 
 .login-card h2 {
   font-size: 2rem;
   margin-bottom: 1.5rem;
+  text-align: center;
   color: var(--color-text);
 }
 
-.login-card form {
+.error-box {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-left: 4px solid #f44;
+  color: #c33;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.login-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.login-card .alt-action {
+.signup-link {
+  text-align: center;
   margin-top: 1.5rem;
-  font-size: 0.9rem;
   color: var(--color-text);
+}
+
+.signup-link a {
+  color: var(--color-primary);
+  font-weight: 500;
 }
 </style>

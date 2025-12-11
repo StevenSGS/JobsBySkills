@@ -33,14 +33,16 @@ export default {
   data() {
     return {
       searchQuery: '',
-      allJobs: [
-        { id: 1, title: 'Desarrollador Frontend Vue.js', company: 'Tech Solutions', location: 'Remoto', skills: ['Vue.js', 'JavaScript', 'HTML', 'CSS', 'API REST'] },
-        { id: 2, title: 'Ingeniero de Backend Node.js', company: 'Global Innovations', location: 'Madrid, España', skills: ['Node.js', 'Express', 'MongoDB', 'SQL'] },
-        { id: 3, title: 'Diseñador UX/UI Senior', company: 'Creative Agency', location: 'Barcelona, España', skills: ['Figma', 'Sketch', 'UX Research', 'Prototipado'] },
-        { id: 4, title: 'Analista de Datos Junior', company: 'Data Insights', location: 'Remoto', skills: ['Python', 'SQL', 'Excel', 'Power BI'] },
-        { id: 5, title: 'Especialista en Marketing Digital', company: 'Growth Hackers', location: 'Valencia, España', skills: ['SEO', 'SEM', 'Redes Sociales', 'Google Analytics'] },
-      ],
+      allJobs: [],
     };
+  },
+  async mounted() {
+    try {
+      const res = await fetch('/api/jobs');
+      this.allJobs = await res.json();
+    } catch (err) {
+      console.error('Error loading jobs:', err);
+    }
   },
   computed: {
     filteredJobs() {

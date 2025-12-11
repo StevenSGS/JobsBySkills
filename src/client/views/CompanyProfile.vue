@@ -41,50 +41,30 @@ export default {
   data() {
     return {
       company: null,
-      allCompanies: [
-        {
-          id: 101,
-          name: 'Tech Solutions',
-          logo: 'https://via.placeholder.com/100x100?text=TS',
-          location: 'Remoto',
-          description: 'Tech Solutions es una empresa líder en desarrollo de software, especializada en soluciones innovadoras para la transformación digital. Nos apasiona la tecnología y el impacto que podemos generar.',
-        },
-        {
-          id: 102,
-          name: 'Global Innovations',
-          logo: 'https://via.placeholder.com/100x100?text=GI',
-          location: 'Madrid, España',
-          description: 'Global Innovations es una multinacional tecnológica que impulsa el futuro con productos y servicios de vanguardia. Buscamos talentos que quieran crecer con nosotros.',
-        },
-        {
-          id: 103,
-          name: 'Creative Agency',
-          logo: 'https://via.placeholder.com/100x100?text=CA',
-          location: 'Barcelona, España',
-          description: 'Creative Agency es un estudio de diseño galardonado, enfocado en crear experiencias de usuario memorables y estéticamente atractivas para marcas globales.',
-        },
-      ],
-      allJobs: [
-        { id: 1, title: 'Desarrollador Frontend Vue.js', company: 'Tech Solutions', companyId: 101, location: 'Remoto', skills: ['Vue.js', 'JavaScript', 'HTML', 'CSS', 'API REST'] },
-        { id: 2, title: 'Ingeniero de Backend Node.js', company: 'Global Innovations', companyId: 102, location: 'Madrid, España', skills: ['Node.js', 'Express', 'MongoDB', 'SQL'] },
-        { id: 3, title: 'Diseñador UX/UI Senior', company: 'Creative Agency', companyId: 103, location: 'Barcelona, España', skills: ['Figma', 'Sketch', 'UX Research', 'Prototipado'] },
-        { id: 4, title: 'Analista de Datos Junior', company: 'Data Insights', companyId: 104, location: 'Remoto', skills: ['Python', 'SQL', 'Excel', 'Power BI'] },
-        { id: 5, title: 'Especialista en Marketing Digital', company: 'Growth Hackers', companyId: 105, location: 'Valencia, España', skills: ['SEO', 'SEM', 'Redes Sociales', 'Google Analytics'] },
-      ],
+      allJobs: [],
     };
   },
   computed: {
     companyJobs() {
-      return this.allJobs.filter(job => job.companyId == this.company.id);
+      return this.allJobs;
     },
   },
-  mounted() {
-    this.fetchCompanyDetails(this.$route.params.id);
-  },
-  methods: {
-    fetchCompanyDetails(companyId) {
-      this.company = this.allCompanies.find(c => c.id == companyId);
-    },
+  async mounted() {
+    const companyId = this.$route.params.id;
+    try {
+      const [companyRes, jobsRes] = await Promise.all([
+        fetch(`/api/companies/${companyId}`),
+        fetch(`/api/jobs?companyId=${companyId}`)
+      ]);
+      if (companyRes.ok) {
+        this.company = await companyRes.json();
+      }
+      if (jobsRes.ok) {
+        this.allJobs = await jobsRes.json();
+      }
+    } catch (err) {
+      console.error('Error loading company:', err);
+    }
   },
 };
 </script>

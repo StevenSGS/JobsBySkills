@@ -16,21 +16,21 @@ El estado actual del proyecto es una base sólida y bien configurada, lista para
 
 - 🏗️ **Infraestructura como Código:** Todo el entorno, desde la base de datos hasta la aplicación, está definido y orquestado con **Docker**, permitiendo un despliegue consistente y sin complicaciones en cualquier máquina.
 
-- ⚙️ **Backend Preparado:** Un servidor **Node.js + Express** está activo y conectado a la base de datos, sirviendo como el núcleo de la futura API.
+- ⚙️ **Backend Preparado:** Un servidor **Node.js + Express** está activo, conectado a la base de datos y sirviendo API RESTful segura.
 
-- 🎨 **Frontend Interactivo:** La interfaz de usuario, desarrollada con **Vue.js** y **Vite**, ha alcanzado una etapa de completitud visual. Se ha implementado **Vue Router** para la navegación y un **Store** global para la gestión de cuentas y perfiles, permitiendo un desarrollo dinámico con recarga en caliente (hot-reloading).
+- 🔐 **Autenticación Completa:** Sistema de registro e inicio de sesión funcional para **Usuarios** y **Empresas**, con validaciones, manejo de sesiones y redirecciones basadas en roles (Admin/Cliente/Empresa).
 
-- 🗃️ **Base de Datos Dinámica:** Al iniciar el entorno por primera vez, un menú interactivo permite elegir con qué conjunto de datos (por defecto o personalizados) inicializar la base de datos **SQL Server**.
+- 🎨 **Frontend Interactivo:** La interfaz de usuario, desarrollada con **Vue.js** y **Vite**, es robusta y reactiva. Incluye dashboard administrativo, gestión de perfiles y navegación contextual.
 
-- ♻️ **Ciclo de Vida Controlado:** Los scripts de inicio se encargan de todo el ciclo de vida de la aplicación: limpian sesiones anteriores, construyen los contenedores y los ejecutan. ¡Cero configuración manual!
+- 🗃️ **Base de Datos Dinámica:** Al iniciar el entorno, un menú interactivo permite elegir con qué conjunto de datos inicializar la base de datos **SQL Server**.
 
-- 🩺 **Endpoint de Diagnóstico:** Una ruta especial (`/api/db-test`) permite visualizar en tiempo real todo el esquema y contenido de la base de datos, facilitando enormemente el desarrollo y la depuración.
+- ♻️ **Ciclo de Vida Controlado:** Los scripts de inicio se encargan de todo el ciclo de vida de la aplicación. ¡Cero configuración manual!
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Frontend:** Vue.js, Vite
+- **Frontend:** Vue.js, Vite, Vue Router, Vuex (Store Pattern)
 - **Backend:** Node.js, Express.js
 - **Base de Datos:** Microsoft SQL Server
 - **Contenedores:** Docker, Docker Compose
@@ -40,24 +40,25 @@ El estado actual del proyecto es una base sólida y bien configurada, lista para
 
 ## 🚀 Hoja de Ruta
 
-Este es el comienzo. La infraestructura está lista, pero el camino para convertir JobsBySkills en una aplicación completa apenas empieza.
+Este es el comienzo. La infraestructura está lista y la Fase 1 (Fundamentos) está completa.
 
-### ✅ Lo que ya existe:
+### ✅ Lo que ya existe (Fase 1 Completada):
 
-- [X] Servidor web básico.
-- [X] Conexión robusta a la base de datos con reintentos.
-- [X] Sistema de scripts para una inicialización de la base de datos seleccionable.
-- [X] Entorno de desarrollo dockerizado.
-- [X] Scripts de gestión para iniciar, reiniciar y detener el entorno.
-- [X] Frontend funcional con la estructura visual y navegación principal completas, usando Vue.js, Vite y Vue-Router.
+- [X] Servidor web y API base.
+- [X] Conexión robusta a base de datos SQL Server.
+- [X] **Sistema de Autenticación:** Registro y Login para Clientes y Empresas.
+- [X] **Roles y Permisos:** Vistas y navegación diferenciada para Admin, Empresa y Cliente.
+- [X] **Panel de Administración:** Estructura inicial del Dashboard administrativo.
+- [X] **Gestión de Sesiones:** Persistencia y timeout por inactividad.
+- [X] Frontend funcional con Vue.js, Vite y Vue-Router.
 
-### 📝 Lo que falta (Próximos Pasos):
+### 📝 Lo que falta (Próximos Pasos - Fase 2):
 
-- [ ] **Desarrollo de la API REST:** Crear los endpoints para gestionar `Usuarios`, `Trabajos`, `Habilidades`, etc. (ej. `GET /jobs`, `POST /users/skills`).
-- [ ] **Autenticación y Autorización:** Implementar un sistema de registro e inicio de sesión (ej. con JWT).
-- [ ] **Integración Frontend-Backend:** Conectar la interfaz de usuario con la API REST para mostrar datos dinámicos.
-- [ ] **Lógica de "Matching":** Diseñar e implementar el algoritmo que conecte las habilidades de los usuarios con los requisitos de los trabajos.
-- [ ] **Pruebas (Testing):** Añadir pruebas unitarias y de integración para asegurar la calidad del código.
+- [ ] **Gestión de Usuarios (CRUD Admin):** Permitir al admin editar/borrar usuarios.
+- [ ] **Publicación de Empleos:** Funcionalidad para empresas.
+- [ ] **Postulación a Empleos:** Funcionalidad para candidatos.
+- [ ] **Lógica de "Matching":** Algoritmo que conecte habilidades con trabajos.
+- [ ] **Pruebas (Testing):** Añadir pruebas unitarias y de integración.
 
 ---
 

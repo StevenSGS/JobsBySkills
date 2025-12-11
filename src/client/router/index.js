@@ -19,6 +19,8 @@ import Clients from '../views/Clients.vue';
 import CompanyRequests from '../views/company/CompanyRequests.vue';
 import CompanyRequestDetails from '../views/company/CompanyRequestDetails.vue';
 
+import AdminDashboard from '../views/admin/AdminDashboard.vue';
+
 const routes = [
   { path: '/', name: 'Home', component: Home },
   { path: '/signup', name: 'Signup', component: Signup },
@@ -38,9 +40,11 @@ const routes = [
 
   { path: '/clients', name: 'Clients', component: Clients },
   { path: '/company/requests', name: 'CompanyRequests', component: CompanyRequests },
+  { path: '/company/profile/:id', name: 'CompanyProfileView', component: CompanyProfile },
   { path: '/company/request/new', name: 'NewCompanyRequest', component: CompanyRequestDetails },
   { path: '/company/request/:id', name: 'CompanyRequestDetails', component: CompanyRequestDetails },
 
+  { path: '/admin', name: 'AdminDashboard', component: AdminDashboard },
 ];
 
 const router = createRouter({

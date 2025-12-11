@@ -29,6 +29,7 @@
 <script>
 import BaseCard from '../components/BaseCard.vue';
 import BaseButton from '../components/BaseButton.vue';
+import authStore from '../store/authStore';
 
 export default {
   name: 'MyApplicationsView',
@@ -38,12 +39,25 @@ export default {
   },
   data() {
     return {
-      applications: [
-        { id: 1, jobId: 1, jobTitle: 'Desarrollador Frontend Vue.js', company: 'Tech Solutions', date: '15/11/2025', status: 'Enviada' },
-        { id: 2, jobId: 2, jobTitle: 'Ingeniero de Backend Node.js', company: 'Global Innovations', date: '10/11/2025', status: 'En Revisión' },
-        { id: 3, jobId: 3, jobTitle: 'Diseñador UX/UI Senior', company: 'Creative Agency', date: '01/11/2025', status: 'Rechazada' },
-      ],
+      applications: [],
     };
+  },
+  async mounted() {
+    const userId = authStore.state.userData?.id;
+    
+    if (!userId) {
+      this.$router.push('/login');
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/applications/user/${userId}`);
+      if (res.ok) {
+        this.applications = await res.json();
+      }
+    } catch (err) {
+      console.error('Error loading applications:', err);
+    }
   },
 };
 </script>

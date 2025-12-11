@@ -3,7 +3,7 @@
     <BaseCard>
       <h2>Sobre JobsBySkills</h2>
       <p>
-        JobsBySkills es un proyecto universitario diseñado para conectar a profesionales con las oportunidades laborales que mejor se ajustan a sus habilidades. En un mercado laboral en constante evolución, entendemos la importancia de una conexión precisa entre el talento y las empresas.
+        JobsBySkills es un proyecto diseñado para conectar a profesionales con las oportunidades laborales que mejor se ajustan a sus habilidades. En un mercado laboral en constante evolución, entendemos la importancia de una conexión precisa entre el talento y las empresas.
       </p>
       <p>
         Nuestra plataforma, desarrollada con Vue.js en el frontend y Node.js en el backend, busca simplificar el proceso de búsqueda de empleo, permitiendo a los usuarios destacar sus competencias y a las empresas encontrar el perfil ideal de manera eficiente.
