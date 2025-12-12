@@ -41,6 +41,7 @@
             <td>{{ formatDate(job.postedAt) }}</td>
             <td>
               <button class="action-btn edit" @click="editJob(job)">Editar</button>
+              <button class="action-btn delete" @click="confirmDelete(job)">Eliminar</button>
             </td>
           </tr>
         </tbody>
@@ -70,72 +71,158 @@
           <label>Descripción</label>
           <textarea v-model="form.description" class="modal-input textarea"></textarea>
         </div>
+        <div class="form-group">
+          <div class="toggle-header" @click="showSkills = !showSkills">
+            <label>Habilidades Requeridas</label>
+            <span class="toggle-icon">{{ showSkills ? '▼' : '▶' }}</span>
+          </div>
+          <div v-if="showSkills" class="chips-container">
+            <div class="available-chips">
+              <div 
+                v-for="skill in availableSkills" 
+                :key="skill.id"
+                @click="toggleSkill(skill.id)"
+                :class="['chip', { selected: isSkillSelected(skill.id) }]"
+              >
+                {{ skill.name }}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </BaseModal>
+    
+    <ConfirmModal
+      :show="showDeleteModal"
+      title="Eliminar Empleo"
+      message="¿Estás seguro de que deseas eliminar este empleo? Esta acción eliminará también todas las aplicaciones asociadas."
+      variant="danger"
+      confirmButtonText="Eliminar"
+      @confirm="deleteJob"
+      @cancel="showDeleteModal = false"
+    />
   </div>
 </template>
 
 <script>
 import BaseModal from '../../components/BaseModal.vue';
+import ConfirmModal from '../../components/ConfirmModal.vue';
 import { loadRecord, saveRecord } from '../../utils/dataHandler';
 
 export default {
   name: 'AdminJobs',
-  components: { BaseModal },
+  components: { BaseModal, ConfirmModal },
   data() {
     return {
       jobs: [],
+      availableSkills: [],
+      showSkills: false,
       isLoading: false,
       error: '',
       showModal: false,
+      showDeleteModal: false,
+      deletingJob: null,
       editingJob: null,
       form: {}
     };
   },
-  async created() {
-    await this.fetchJobs();
+  async mounted() {
+    await this.loadJobs();
+    await this.loadSkills();
   },
   methods: {
-    async fetchJobs() {
+    async loadJobs() {
       this.isLoading = true;
-      const data = await loadRecord('/api/jobs/all');
-      this.isLoading = false;
-      
-      if (data) {
-        this.jobs = data;
+      try {
+        this.jobs = await loadRecord('/api/jobs/all');
+      } catch (err) {
+        this.error = 'Error al cargar empleos';
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async loadSkills() {
+      try {
+        this.availableSkills = await loadRecord('/api/skills');
+      } catch (err) {
+        console.error('Error loading skills:', err);
       }
     },
     formatDate(dateString) {
       if (!dateString) return 'N/A';
       return new Date(dateString).toLocaleDateString();
     },
-    editJob(job) {
+    async editJob(job) {
       this.editingJob = job;
-      this.form = { 
-        title: job.title,
-        status: job.status,
-        description: job.description
-      };
-      this.showModal = true;
+      try {
+        const response = await fetch(`/api/jobs/${job.id}`);
+        const jobDetails = await response.json();
+        
+        const skillIds = jobDetails.skills ? jobDetails.skills.map(s => parseInt(s.id, 10)) : [];
+        
+        this.form = { 
+          title: job.title,
+          status: job.status,
+          description: job.description || jobDetails.description || '',
+          skills: skillIds
+        };
+        this.showModal = true;
+      } catch (err) {
+        console.error('Error loading job details:', err);
+        this.form = { 
+          title: job.title,
+          status: job.status,
+          description: job.description || '',
+          skills: []
+        };
+        this.showModal = true;
+      }
+    },
+    toggleSkill(skillId) {
+      const skillIdInt = parseInt(skillId, 10);
+      const index = this.form.skills.findIndex(s => parseInt(s, 10) === skillIdInt);
+      if (index > -1) {
+        this.form.skills.splice(index, 1);
+      } else {
+        this.form.skills.push(skillIdInt);
+      }
+    },
+    isSkillSelected(skillId) {
+      const skillIdInt = parseInt(skillId, 10);
+      return this.form.skills.some(s => parseInt(s, 10) === skillIdInt);
     },
     closeModal() {
       this.showModal = false;
+      this.showSkills = false;
       this.editingJob = null;
-      this.form = {};
+      this.form = {
+        title: '',
+        status: '',
+        description: '',
+        skills: []
+      };
     },
     async saveChanges() {
-      if (!this.editingJob) return;
-      
-      const result = await saveRecord(
-        `/api/jobs/${this.editingJob.id}`,
-        'PUT',
-        this.form,
-        'Empleo actualizado correctamente'
-      );
-
-      if (result) {
-        this.fetchJobs();
-        this.closeModal();
+      try {
+        await saveRecord('/api/jobs', this.editingJob.id, this.form);
+        this.showModal = false;
+        await this.loadJobs();
+      } catch (err) {
+        this.error = 'Error al guardar';
+      }
+    },
+    confirmDelete(job) {
+      this.deletingJob = job;
+      this.showDeleteModal = true;
+    },
+    async deleteJob() {
+      try {
+        await fetch(`/api/jobs/${this.deletingJob.id}`, { method: 'DELETE' });
+        this.showDeleteModal = false;
+        this.deletingJob = null;
+        await this.loadJobs();
+      } catch (err) {
+        this.error = 'Error al eliminar';
       }
     }
   }
@@ -212,6 +299,63 @@ export default {
 
 .action-btn:hover {
   background-color: var(--color-card-shadow);
+  border-color: var(--color-text);
+}
+
+.toggle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.5rem;
+  background-color: var(--color-card-bg);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.toggle-header:hover {
+  background-color: var(--color-border);
+}
+
+.toggle-icon {
+  font-size: 0.8rem;
+  color: var(--color-text);
+}
+
+.chips-container {
+  padding: 1rem;
+  background-color: var(--color-bg);
+  border-radius: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.available-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  padding: 0.5rem 1rem;
+  background-color: var(--color-border);
+  color: var(--color-text);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.chip:hover {
+  background-color: var(--color-primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.chip.selected {
+  background-color: var(--color-primary);
+  color: white;
+  font-weight: 600;
 }
 
 .loading-state, .error-state {

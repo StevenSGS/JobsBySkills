@@ -110,12 +110,12 @@ router.get('/:id', async (req, res) => {
         job.requirements = requirementsResult.recordset.map(row => row.RequirementText);
         
         const skillsResult = await sql.query`
-            SELECT s.SkillName
+            SELECT s.SkillID as id, s.SkillName as name
             FROM JobSkills js
             INNER JOIN Skills s ON js.SkillID = s.SkillID
             WHERE js.JobID = ${id}
         `;
-        job.skills = skillsResult.recordset.map(row => row.SkillName);
+        job.skills = skillsResult.recordset;
         
         res.json(job);
     } catch (err) {
@@ -167,41 +167,39 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, location, status, skills, requirements } = req.body;
+        const { title, status, description, skills } = req.body;
         
         await sql.query`
             UPDATE Jobs
-            SET JobTitle = ${title}, JobDescription = ${description},
-                Location = ${location}, Status = ${status}
+            SET JobTitle = ${title}, Status = ${status}, JobDescription = ${description || ''}
             WHERE JobID = ${id}
         `;
         
-        await sql.query`DELETE FROM JobRequirements WHERE JobID = ${id}`;
-        if (requirements && requirements.length > 0) {
-            for (const req of requirements) {
-                await sql.query`
-                    INSERT INTO JobRequirements (JobID, RequirementText)
-                    VALUES (${id}, ${req})
-                `;
-            }
-        }
-        
-        await sql.query`DELETE FROM JobSkills WHERE JobID = ${id}`;
-        if (skills && skills.length > 0) {
-            for (const skillName of skills) {
-                const skillResult = await sql.query`
-                    SELECT SkillID FROM Skills WHERE SkillName = ${skillName}
-                `;
-                if (skillResult.recordset.length > 0) {
+        if (skills && Array.isArray(skills)) {
+            await sql.query`DELETE FROM JobSkills WHERE JobID = ${id}`;
+            
+            for (const skillId of skills) {
+                const skillIdInt = parseInt(skillId, 10);
+                if (!isNaN(skillIdInt)) {
                     await sql.query`
                         INSERT INTO JobSkills (JobID, SkillID)
-                        VALUES (${id}, ${skillResult.recordset[0].SkillID})
+                        VALUES (${id}, ${skillIdInt})
                     `;
                 }
             }
         }
         
         res.json({ message: 'Job updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await sql.query`DELETE FROM Jobs WHERE JobID = ${id}`;
+        res.json({ message: 'Job deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

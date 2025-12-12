@@ -83,7 +83,7 @@
             <div class="applicant-status">
               <select 
                 v-model="applicant.status" 
-                @change="updateApplicationStatus(applicant.id, applicant.status)"
+                @change="updateApplicationStatus(applicant)"
                 class="status-select"
               >
                 <option value="Pendiente">Pendiente</option>
@@ -100,8 +100,19 @@
         <router-link to="/company/requests">
           <BaseButton type="text">&larr; Volver a Mis Solicitudes</BaseButton>
         </router-link>
+        <BaseButton type="danger" @click="confirmDeleteJob">Eliminar Solicitud</BaseButton>
       </div>
     </BaseCard>
+    
+    <ConfirmModal
+      :show="showDeleteModal"
+      title="Eliminar Solicitud de Empleo"
+      message="¿Estás seguro de que deseas eliminar esta solicitud? Se eliminarán también todas las postulaciones asociadas."
+      variant="danger"
+      confirmButtonText="Eliminar"
+      @confirm="deleteJob"
+      @cancel="showDeleteModal = false"
+    />
   </div>
 </template>
 
@@ -109,6 +120,7 @@
 import BaseCard from '../../components/BaseCard.vue';
 import BaseButton from '../../components/BaseButton.vue';
 import InputField from '../../components/InputField.vue';
+import ConfirmModal from '../../components/ConfirmModal.vue';
 import authStore from '../../store/authStore';
 import { saveRecord, loadRecord } from '../../utils/dataHandler';
 
@@ -118,6 +130,7 @@ export default {
     BaseCard,
     BaseButton,
     InputField,
+    ConfirmModal,
   },
   data() {
     return {
@@ -135,6 +148,7 @@ export default {
       requirementsInput: '',
       applicants: [],
       viewingProfile: null,
+      showDeleteModal: false,
     };
   },
   computed: {
@@ -226,17 +240,31 @@ export default {
     cancelEdit() {
       this.$router.push('/company/requests');
     },
-    async updateApplicationStatus(applicationId, newStatus) {
-      const result = await saveRecord(
-        `/api/applications/${applicationId}`,
-        'PUT',
-        { status: newStatus },
-        `Estado actualizado a: ${newStatus}`
-      );
+    async updateApplicationStatus(applicant) {
+      try {
+        await fetch(`/api/applications/${applicant.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: applicant.status })
+        });
+      } catch (err) {
+        console.error('Error updating status:', err);
+      }
     },
     viewApplicantProfile(userId) {
-      this.$router.push(`/profile/${userId}`);
+      this.$router.push(`/user/${userId}`);
     },
+    confirmDeleteJob() {
+      this.showDeleteModal = true;
+    },
+    async deleteJob() {
+      try {
+        await fetch(`/api/jobs/${this.$route.params.id}`, { method: 'DELETE' });
+        this.$router.push('/company/requests');
+      } catch (err) {
+        console.error('Error deleting job:', err);
+      }
+    }
   },
 };
 </script>

@@ -71,10 +71,28 @@
           Esta empresa aún no tiene ofertas publicadas.
         </p>
       </div>
+      
+      <div v-if="isOwner" class="danger-zone">
+        <h3>Zona de Peligro</h3>
+        <p class="danger-warning">Esta acción eliminará permanentemente el perfil de la empresa y todas las solicitudes de empleo asociadas.</p>
+        <BaseButton type="danger" @click="confirmDeleteCompany">Eliminar Perfil de Empresa</BaseButton>
+      </div>
     </BaseCard>
+    
+    <ConfirmModal
+      :show="showDeleteModal"
+      title="Eliminar Perfil de Empresa"
+      message="Esta acción eliminará permanentemente el perfil de la empresa, todas las solicitudes de empleo y postulaciones asociadas. Para confirmar, escribe 'ELIMINAR' a continuación."
+      variant="danger"
+      :requireConfirmText="true"
+      confirmText="ELIMINAR"
+      confirmButtonText="Eliminar Empresa"
+      @confirm="deleteCompany"
+      @cancel="showDeleteModal = false"
+    />
 
    
-    <p v-else class="no-company-message">
+    <p v-if="!company && !isLoading" class="no-company-message">
       No se encontró información para esta empresa.
     </p>
   </div>
@@ -84,6 +102,7 @@
 import BaseCard from '../../components/BaseCard.vue';
 import BaseButton from '../../components/BaseButton.vue';
 import JobCard from '../../components/JobCard.vue';
+import ConfirmModal from '../../components/ConfirmModal.vue';
 import authStore from '../../store/authStore';
 
 export default {
@@ -92,12 +111,14 @@ export default {
     BaseCard,
     BaseButton,
     JobCard,
+    ConfirmModal,
   },
   data() {
     return {
       isLoading: true,
       company: null,
-      allJobs: [],
+      jobs: [],
+      showDeleteModal: false,
     };
   },
   computed: {
@@ -140,12 +161,25 @@ export default {
   },
   methods: {
     handleAction() {
-        if (this.isOwner) {
-            this.$router.push('/company/edit');
-        } else if (this.company.website && typeof window !== 'undefined') {
-            window.open(this.company.website, '_blank');
-        }
+      if (this.isOwner) {
+        this.$router.push(`/company/edit/${this.company.id}`);
+      } else if (this.company.website) {
+        window.open(this.company.website, '_blank');
+      }
     },
+    confirmDeleteCompany() {
+      this.showDeleteModal = true;
+    },
+    async deleteCompany() {
+      this.showDeleteModal = false;
+      try {
+        const companyId = authStore.state.userData?.id;
+        await fetch(`/api/companies/${companyId}`, { method: 'DELETE' });
+        authStore.logout();
+      } catch (err) {
+        console.error('Error deleting company:', err);
+      }
+    }
   },
 };
 </script>

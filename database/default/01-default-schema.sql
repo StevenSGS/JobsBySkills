@@ -93,9 +93,10 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='BlogPosts' and xtype='U')
 CREATE TABLE BlogPosts (
     PostID INT PRIMARY KEY IDENTITY(1,1),
     Title VARCHAR(300) NOT NULL,
-    Author VARCHAR(100),
-    PublishedDate VARCHAR(50),
+    AuthorID INT,
+    PublishedDate DATETIME DEFAULT GETDATE(),
     Excerpt TEXT,
     Content TEXT,
-    CreatedAt DATETIME DEFAULT GETDATE()
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (AuthorID) REFERENCES Users(UserID) ON DELETE CASCADE
 );

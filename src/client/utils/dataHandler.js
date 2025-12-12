@@ -8,8 +8,22 @@
  * @param {string} successMessage - Message to show on success.
  * @returns {Promise<object|null>} - Returns response data on success, null on error.
  */
-export async function saveRecord(url, method, data, successMessage = 'Operación exitosa') {
+export async function saveRecord(url, idOrMethod, dataOrData, successMessageOrNull = 'Operación exitosa') {
     try {
+        let method, data, successMessage;
+        
+        if (typeof idOrMethod === 'string' && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(idOrMethod.toUpperCase())) {
+            method = idOrMethod;
+            data = dataOrData;
+            successMessage = successMessageOrNull;
+        } else {
+            const id = idOrMethod;
+            data = dataOrData;
+            successMessage = successMessageOrNull;
+            method = id ? 'PUT' : 'POST';
+            url = id ? `${url}/${id}` : url;
+        }
+
         const options = {
             method: method,
             headers: {
@@ -22,10 +36,24 @@ export async function saveRecord(url, method, data, successMessage = 'Operación
         }
 
         const response = await fetch(url, options);
-        const result = await response.json();
-
+        
         if (!response.ok) {
-            throw new Error(result.error || `Error ${response.status}: ${response.statusText}`);
+            const errorText = await response.text();
+            let errorMessage;
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorMessage = errorJson.error || errorJson.message;
+            } catch {
+                errorMessage = errorText || `Error ${response.status}`;
+            }
+            throw new Error(errorMessage);
+        }
+
+        const contentType = response.headers.get('content-type');
+        let result = null;
+        if (contentType && contentType.includes('application/json')) {
+            const text = await response.text();
+            result = text ? JSON.parse(text) : null;
         }
 
         if (successMessage) {
