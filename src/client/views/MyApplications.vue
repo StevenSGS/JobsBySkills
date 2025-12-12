@@ -111,20 +111,21 @@ export default {
   border-radius: 5px;
   font-size: 0.9rem;
   font-weight: 500;
-  color: white;
 }
 
 .status-tag.enviada {
-  background-color: #007bff;
+  background-color: rgba(0, 123, 255, 0.2);
+  color: #007bff;
 }
 
 .status-tag.en-revisión {
-  background-color: #ffc107;
-  color: #333;
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
 }
 
 .status-tag.rechazada {
-  background-color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
 }
 
 .no-applications-message {

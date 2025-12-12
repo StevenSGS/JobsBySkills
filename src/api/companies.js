@@ -7,11 +7,26 @@ router.get('/', async (req, res) => {
     try {
         const result = await sql.query`
             SELECT CompanyID as id, CompanyName as name, Logo as logo,
-                   Location as location, Description as description
+                   Location as location, Description as description, Email as email
             FROM Companies
-            ORDER BY CreatedAt DESC
+            ORDER BY CreatedAt ASC
         `;
         res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/values/catalog', async (req, res) => {
+    try {
+        const result = await sql.query`
+            SELECT DISTINCT ValueText 
+            FROM CompanyValues 
+            WHERE ValueText IS NOT NULL AND ValueText <> ''
+            ORDER BY ValueText ASC
+        `;
+        const values = result.recordset.map(row => row.ValueText);
+        res.json(values);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -47,6 +62,36 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+router.put('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { companyName, location, description, website, industry, size } = req.body;
+        
+        await sql.query`
+            UPDATE Companies
+            SET CompanyName = ${companyName}, 
+                Location = ${location}, 
+                Description = ${description},
+                Website = ${website},
+                Industry = ${industry},
+                CompanySize = ${size}
+            WHERE CompanyID = ${id}
+        `;
+
+        const { values } = req.body;
+        if (Array.isArray(values)) {
+            await sql.query`DELETE FROM CompanyValues WHERE CompanyID = ${id}`;
+            for (const val of values) {
+                await sql.query`INSERT INTO CompanyValues (CompanyID, ValueText) VALUES (${id}, ${val})`;
+            }
+        }
+        
+        res.json({ message: 'Company updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -71,7 +116,7 @@ router.post('/login', async (req, res) => {
         }
         
         const result = await sql.query`
-            SELECT CompanyID as id, CompanyName as companyName, Email as email
+            SELECT CompanyID as id, CompanyName as name, Email as email, 'company' as userType
             FROM Companies
             WHERE Email = ${email} AND Password = ${password}
         `;

@@ -4,21 +4,35 @@
       <div class="navbar-left">
         <router-link to="/" class="navbar-brand">JobsBySkills</router-link>
         <nav class="nav-links">
-          <router-link to="/company/requests" class="nav-link" v-if="userType === 'company'">Mis Solicitudes</router-link>
-          
           <template v-if="userType === 'admin'">
-             <router-link to="/admin" class="nav-link">Dashboard</router-link>
-             <router-link to="/admin" class="nav-link">Usuarios</router-link>
-             <router-link to="/admin" class="nav-link">Empleos</router-link>
-             <router-link to="/admin" class="nav-link">Contenido</router-link>
+             <router-link :to="{ name: 'AdminHome' }" class="nav-link">Dashboard</router-link>
+             <router-link :to="{ name: 'AdminUsers' }" class="nav-link">Usuarios</router-link>
+             <router-link :to="{ name: 'AdminJobs' }" class="nav-link">Empleos</router-link>
+             <router-link :to="{ name: 'AdminContent' }" class="nav-link">Contenido</router-link>
           </template>
 
-          <router-link to="/" class="nav-link" v-if="userType === 'client' || !isLoggedIn">Inicio</router-link>
-          <router-link to="/jobs" class="nav-link" v-if="userType === 'client' || !isLoggedIn">Empleos</router-link>
-          <router-link to="/blog" class="nav-link" v-if="userType !== 'admin'">Blog</router-link>
-          <router-link to="/about" class="nav-link" v-if="userType !== 'admin'">Acerca de</router-link>
-          <router-link to="/companies" class="nav-link" v-if="(!isLoggedIn || userType === 'client') && userType !== 'admin'">Para Empresas</router-link>
-          <router-link to="/clients" class="nav-link" v-if="(!isLoggedIn || userType === 'company') && userType !== 'admin'">Para Clientes</router-link>
+          <template v-else-if="userType === 'company'">
+            <router-link to="/company/requests" class="nav-link">Mis Solicitudes</router-link>
+            <router-link to="/clients" class="nav-link">Para Clientes</router-link>
+            <router-link to="/blog" class="nav-link">Blog</router-link>
+            <router-link to="/about" class="nav-link">Acerca de</router-link>
+          </template>
+
+          <template v-else-if="userType === 'client'">
+            <router-link to="/jobs" class="nav-link">Empleos</router-link>
+            <router-link to="/companies" class="nav-link">Para Empresas</router-link>
+            <router-link to="/blog" class="nav-link">Blog</router-link>
+            <router-link to="/about" class="nav-link">Acerca de</router-link>
+          </template>
+
+          <template v-else>
+            <router-link to="/" class="nav-link">Inicio</router-link>
+            <router-link to="/jobs" class="nav-link">Empleos</router-link>
+            <router-link to="/companies" class="nav-link">Para Empresas</router-link>
+            <router-link to="/clients" class="nav-link">Para Clientes</router-link>
+            <router-link to="/blog" class="nav-link">Blog</router-link>
+            <router-link to="/about" class="nav-link">Acerca de</router-link>
+          </template>
         </nav>
       </div>
 
@@ -87,12 +101,10 @@ export default {
       return authStore.state.isAuthenticated;
     },
     accountName() {
-      if (this.userType === 'company') {
-        return this.authState.userData?.companyName || 'Empresa';
-      } else if (this.userType === 'admin') {
+      if (this.userType === 'admin') {
         return 'Administrador';
       }
-      return this.authState.userData?.name || 'Usuario';
+      return this.authState.userData?.name || this.authState.userData?.companyName || 'Usuario';
     },
     accountLink() {
       if (this.userType === 'company') {
@@ -178,7 +190,6 @@ export default {
   gap: 1.5rem;
   align-items: center;
   flex-shrink: 1;
-  overflow: hidden;
 }
 
 .nav-link {

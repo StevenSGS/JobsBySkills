@@ -145,10 +145,10 @@ export default {
 }
 
 .error-box {
-  background-color: #fee;
-  border: 1px solid #fcc;
+  background-color: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
   border-left: 4px solid #f44;
-  color: #c33;
+  color: var(--color-error-text);
   padding: 1rem;
   margin-bottom: 1.5rem;
   border-radius: 4px;

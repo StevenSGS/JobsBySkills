@@ -4,66 +4,30 @@
       <h3>Panel de Control</h3>
       <ul class="admin-nav">
         <li>
-          <a href="#" class="active"><i class="fas fa-chart-line"></i> Dashboard Principal</a>
+          <router-link :to="{ name: 'AdminHome' }" exact-active-class="active">
+            <i class="fas fa-chart-line"></i> Dashboard Principal
+          </router-link>
         </li>
         <li>
-          <a href="#"><i class="fas fa-users-cog"></i> Usuarios y Empresas</a>
+          <router-link :to="{ name: 'AdminUsers' }" active-class="active">
+            <i class="fas fa-users-cog"></i> Usuarios y Empresas
+          </router-link>
         </li>
         <li>
-          <a href="#"><i class="fas fa-briefcase"></i> Empleos y Solicitudes</a>
+          <router-link :to="{ name: 'AdminJobs' }" active-class="active">
+            <i class="fas fa-briefcase"></i> Empleos y Solicitudes
+          </router-link>
         </li>
         <li>
-          <a href="#"><i class="fas fa-newspaper"></i> Blog y Contenido</a>
+          <router-link :to="{ name: 'AdminContent' }" active-class="active">
+            <i class="fas fa-newspaper"></i> Blog y Contenido
+          </router-link>
         </li>
       </ul>
     </div>
     
     <div class="admin-content">
-      <h2 class="section-title">Vista General del Sistema</h2>
-      
-      <div class="stats-grid">
-        <BaseCard class="stat-card blue">
-          <div class="stat-icon"><i class="fas fa-users"></i></div>
-          <div class="stat-info">
-            <h3>Usuarios</h3>
-            <p class="stat-number">1,245</p>
-            <p class="stat-trend">+12% este mes</p>
-          </div>
-        </BaseCard>
-        
-        <BaseCard class="stat-card green">
-          <div class="stat-icon"><i class="fas fa-building"></i></div>
-          <div class="stat-info">
-            <h3>Empresas</h3>
-            <p class="stat-number">86</p>
-            <p class="stat-trend">+5% este mes</p>
-          </div>
-        </BaseCard>
-        
-        <BaseCard class="stat-card purple">
-          <div class="stat-icon"><i class="fas fa-briefcase"></i></div>
-          <div class="stat-info">
-            <h3>Empleos</h3>
-            <p class="stat-number">342</p>
-            <p class="stat-trend">+18% este mes</p>
-          </div>
-        </BaseCard>
-        
-        <BaseCard class="stat-card orange">
-          <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
-          <div class="stat-info">
-            <h3>Solicitudes</h3>
-            <p class="stat-number">5,678</p>
-            <p class="stat-trend">+24% este mes</p>
-          </div>
-        </BaseCard>
-      </div>
-
-      <div class="recent-activity">
-        <h3>Actividad Reciente y Accesos Rápidos</h3>
-        <p>Próximamente: CRUD completo para administración del sistema.</p>
-      </div>
-
+      <router-view :key="$route.fullPath"></router-view>
     </div>
   </div>
 </template>
@@ -84,22 +48,25 @@ export default {
   display: flex;
   gap: 2rem;
   padding-top: 2rem;
+  min-height: 80vh;
 }
 
 .admin-sidebar {
   width: 250px;
   flex-shrink: 0;
-  background: white;
+  background-color: var(--color-card-bg);
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px var(--color-card-shadow);
   height: fit-content;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 
 .admin-sidebar h3 {
   margin-bottom: 1.5rem;
   color: var(--color-primary);
-  border-bottom: 2px solid #eee;
+  border-bottom: 2px solid var(--color-border);
   padding-bottom: 0.5rem;
 }
 
@@ -119,12 +86,15 @@ export default {
   color: var(--color-text);
   border-radius: 4px;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .admin-nav a:hover,
-.admin-nav a.active {
-  background-color: var(--color-secondary);
-  color: white;
+.admin-nav .active {
+  background-color: var(--color-primary);
+  color: #FFFFFF; 
 }
 
 .admin-content {
@@ -143,6 +113,9 @@ export default {
   align-items: center;
   gap: 1.5rem;
   padding: 1.5rem;
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 
 .stat-icon {
@@ -163,7 +136,8 @@ export default {
 
 .stat-info h3 {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--color-text);
+  opacity: 0.7;
   margin-bottom: 0.25rem;
 }
 
@@ -180,9 +154,11 @@ export default {
 }
 
 .recent-activity {
-  background: white;
+  background-color: var(--color-card-bg);
   padding: 2rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px var(--color-card-shadow);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 </style>

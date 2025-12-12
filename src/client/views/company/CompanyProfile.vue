@@ -20,10 +20,23 @@
               Fundada en {{ company.founded }}
             </span>
           </div>
-          <div class="company-actions" v-if="company.website">
-            <BaseButton type="primary" @click="openWebsite">
-              Visitar sitio web
-            </BaseButton>
+          <div class="company-actions">
+           <BaseButton 
+             :key="isOwner ? 'owner' : 'visitor'"
+             v-if="isOwner || company.website"
+             :type="isOwner ? 'secondary' : 'primary'" 
+             @click="handleAction"
+           >
+             {{ isOwner ? 'Editar Perfil' : 'Visitar Sitio Web' }}
+           </BaseButton>
+           <BaseButton 
+             v-if="isOwner"
+             type="primary"
+             @click="$router.push('/company/request/new')"
+             style="margin-left: 0.5rem;"
+           >
+             Publicar Solicitud
+           </BaseButton>
           </div>
         </div>
       </div>
@@ -50,6 +63,7 @@
             v-for="job in companyJobs"
             :key="job.id"
             :job="job"
+            :customLink="isOwner ? `/company/request/${job.id}` : `/job/${job.id}`"
           />
         </div>
 
@@ -70,6 +84,7 @@
 import BaseCard from '../../components/BaseCard.vue';
 import BaseButton from '../../components/BaseButton.vue';
 import JobCard from '../../components/JobCard.vue';
+import authStore from '../../store/authStore';
 
 export default {
   name: 'CompanyProfileView',
@@ -86,9 +101,23 @@ export default {
     };
   },
   computed: {
+    authState() {
+      return authStore.state;
+    },
     companyJobs() {
       return this.allJobs;
     },
+    isOwner() {
+        if (!this.company) return false;
+        
+        const { isAuthenticated, userType, userData } = this.authState;
+        
+        if (!isAuthenticated || userType !== 'company' || !userData) {
+            return false;
+        }
+
+        return String(userData.id) === String(this.company.id);
+    }
   },
   async created() {
     const companyId = Number(this.$route.params.id) || 1;
@@ -110,10 +139,12 @@ export default {
     }
   },
   methods: {
-    openWebsite() {
-      if (this.company && this.company.website && typeof window !== 'undefined') {
-        window.open(this.company.website, '_blank');
-      }
+    handleAction() {
+        if (this.isOwner) {
+            this.$router.push('/company/edit');
+        } else if (this.company.website && typeof window !== 'undefined') {
+            window.open(this.company.website, '_blank');
+        }
     },
   },
 };

@@ -58,17 +58,45 @@ export default {
     authStore() {
       return authStore;
     },
+    isLoggedIn() {
+      return authStore.state.isLoggedIn && authStore.state.userData?.id;
+    },
   },
   mounted() {
     this.fetchJobDetails(this.$route.params.id);
   },
   methods: {
-    applyForJob() {
-      if (!this.authStore.state.isLoggedIn) {
+    async applyForJob() {
+      const userData = authStore.state.userData;
+      
+      if (!userData || !userData.id) {
         alert('Debes iniciar sesión para postularte a un empleo.');
         this.$router.push('/login');
-      } else {
-        alert('¡Te has postulado a este empleo!');
+        return;
+      }
+
+      const userId = userData.id;
+
+      try {
+        const res = await fetch('/api/applications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: userId,
+            jobId: this.job.id,
+            status: 'Pendiente'
+          })
+        });
+
+        if (res.ok) {
+          alert('¡Te has postulado exitosamente a este empleo!');
+        } else {
+          const error = await res.json();
+          alert(error.error || 'Error al postularse. Intenta nuevamente.');
+        }
+      } catch (err) {
+        console.error('Error applying for job:', err);
+        alert('Error al postularse. Verifica tu conexión.');
       }
     },
     async fetchJobDetails(jobId) {
