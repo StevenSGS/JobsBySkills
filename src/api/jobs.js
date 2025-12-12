@@ -3,12 +3,29 @@ import sql from 'mssql';
 
 const router = express.Router();
 
+router.get('/all', async (req, res) => {
+    try {
+        const query = `
+            SELECT j.JobID as id, j.JobTitle as title, c.CompanyName as company,
+                   j.Location as location, j.Status as status, j.PostedAt as postedAt
+            FROM Jobs j
+            INNER JOIN Companies c ON j.CompanyID = c.CompanyID
+            ORDER BY j.PostedAt ASC
+        `;
+        const result = await sql.query(query);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.get('/', async (req, res) => {
     try {
         const { companyId } = req.query;
         let query = `
             SELECT j.JobID as id, j.JobTitle as title, c.CompanyName as company,
-                   j.Location as location, j.CompanyID as companyId
+                   j.Location as location, j.CompanyID as companyId, j.Status as status,
+                   CONVERT(VARCHAR, j.PostedAt, 23) as date
             FROM Jobs j
             INNER JOIN Companies c ON j.CompanyID = c.CompanyID
             WHERE j.Status = 'Activa'
@@ -18,7 +35,7 @@ router.get('/', async (req, res) => {
             query += ` AND j.CompanyID = ${parseInt(companyId)}`;
         }
         
-        query += ` ORDER BY j.PostedAt DESC`;
+        query += ` ORDER BY j.PostedAt ASC`;
         
         const result = await sql.query(query);
         
@@ -47,7 +64,7 @@ router.get('/featured', async (req, res) => {
             FROM Jobs j
             INNER JOIN Companies c ON j.CompanyID = c.CompanyID
             WHERE j.Status = 'Activa'
-            ORDER BY j.PostedAt DESC
+            ORDER BY j.PostedAt ASC
         `;
         
         const jobsWithSkills = await Promise.all(result.recordset.map(async (job) => {

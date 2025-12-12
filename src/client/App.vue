@@ -9,12 +9,16 @@
 
 <script>
 import Navbar from './components/Navbar.vue';
+import authStore from './store/authStore';
 
 export default {
   name: 'App',
   components: {
     Navbar,
   },
+  mounted() {
+    authStore.methods.initializeStore();
+  }
 };
 </script>
 

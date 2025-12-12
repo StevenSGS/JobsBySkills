@@ -36,7 +36,7 @@
           </BaseCard>
         </div>
         <p v-else class="no-applications-message">
-          Aún no  has apliocado a ningún empleo. ¡Explora nuestras ofertas!
+          Aún no has aplicado a ningún empleo. ¡Explora nuestras ofertas!
         </p>
       </div>
     </BaseCard>
@@ -181,20 +181,21 @@ export default {
   border-radius: 4px;
   font-size: 0.85rem;
   font-weight: 500;
-  color: white;
 }
 
 .status-tag.en {
-  background-color: #007bff;
+  background-color: rgba(0, 123, 255, 0.2);
+  color: #007bff;
 }
 
 .status-tag.entrevista {
-  background-color: #ffc107;
-  color: #333;
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
 }
 
 .status-tag.rechazado {
-  background-color: #dc3545; 
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
 }
 
 .no-applications-message {

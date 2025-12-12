@@ -80,11 +80,13 @@ export default {
           return;
         }
 
-        if (data.userType === 'admin') {
-          authStore.methods.login(data);
+        const userData = { ...data, userType: data.userType || data.type };
+
+        if (userData.userType === 'admin') {
+          authStore.methods.login(userData);
           this.$router.push('/admin');
         } else {
-          authStore.methods.login(data);
+          authStore.methods.login(userData);
           this.$router.push('/');
         }
       } catch (err) {
@@ -118,10 +120,10 @@ export default {
 }
 
 .error-box {
-  background-color: #fee;
-  border: 1px solid #fcc;
+  background-color: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
   border-left: 4px solid #f44;
-  color: #c33;
+  color: var(--color-error-text);
   padding: 1rem;
   margin-bottom: 1.5rem;
   border-radius: 4px;

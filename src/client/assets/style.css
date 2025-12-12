@@ -7,6 +7,9 @@
   --color-border: #DEE2E6;
   --color-card-bg: #F8F9FA;
   --color-card-shadow: rgba(0, 0, 0, 0.05);
+  --color-error-bg: #fee;
+  --color-error-text: #c33;
+  --color-error-border: #fcc;
 }
 
 .dark-theme {
@@ -17,6 +20,10 @@
   --color-border: #333333;
   --color-card-bg: #1E1E1E;
   --color-card-shadow: rgba(0, 0, 0, 0.2);
+  --color-text-filter-value: 1;
+  --color-error-bg: #3e1f1f;
+  --color-error-text: #ff6b6b;
+  --color-error-border: #5c2b2b;
 }
 
 *,

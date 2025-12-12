@@ -1,6 +1,6 @@
 <template>
   <BaseCard class="job-card">
-    <router-link :to="{ name: 'JobDetails', params: { id: job.id } }">
+    <router-link :to="cardLink">
       <h3>{{ job.title }}</h3>
       <p class="company-name">{{ job.company }}</p>
       <p class="job-location">{{ job.location }}</p>
@@ -23,6 +23,18 @@ export default {
     job: {
       type: Object,
       required: true,
+    },
+    customLink: {
+      type: [String, Object],
+      default: null,
+    },
+  },
+  computed: {
+    cardLink() {
+      if (this.customLink) {
+        return this.customLink;
+      }
+      return { name: 'JobDetails', params: { id: this.job.id } };
     },
   },
 };

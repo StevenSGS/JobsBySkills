@@ -146,20 +146,21 @@ export default {
   border-radius: 5px;
   font-size: 0.8rem;
   font-weight: 500;
-  color: white;
 }
 
 .status-tag.activa {
-  background-color: #28a745;
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
 }
 
 .status-tag.pendiente {
-  background-color: #ffc107;
-  color: #333;
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
 }
 
 .status-tag.cerrada {
-  background-color: #6c757d;
+  background-color: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
 }
 
 .no-requests-message {

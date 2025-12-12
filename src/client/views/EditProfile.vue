@@ -20,13 +20,22 @@
           required
         />
         <div class="form-group">
-          <label for="editSkills">Habilidades</label>
-          <input
-            id="editSkills"
-            type="text"
-            v-model="skillsInput"
-            class="input-field"
-          />
+          <div class="skills-header" @click="skillsExpanded = !skillsExpanded">
+            <label>Habilidades</label>
+            <span class="toggle-icon">{{ skillsExpanded ? '▼' : '▶' }}</span>
+          </div>
+          <div v-show="skillsExpanded" class="skills-selection">
+            <div class="available-skills">
+              <span 
+                v-for="skill in availableSkills" 
+                :key="skill"
+                :class="['skill-chip', { selected: user.skills.includes(skill) }]"
+                @click="toggleSkill(skill)"
+              >
+                {{ skill }}
+              </span>
+            </div>
+          </div>
         </div>
         <div class="form-actions">
           <BaseButton type="primary">Guardar Cambios</BaseButton>
@@ -76,6 +85,7 @@ import InputField from '../components/InputField.vue';
 import BaseButton from '../components/BaseButton.vue';
 import BaseCard from '../components/BaseCard.vue';
 import authStore from '../store/authStore';
+import { saveRecord, loadRecord } from '../utils/dataHandler';
 
 export default {
   name: 'EditProfileView',
@@ -96,7 +106,8 @@ export default {
         new: '',
         confirm: '',
       },
-      skillsInput: '',
+      availableSkills: [],
+      skillsExpanded: false,
     };
   },
   async mounted() {
@@ -107,20 +118,29 @@ export default {
       return;
     }
     
-    try {
-      const res = await fetch(`/api/users/${userId}`);
-      if (res.ok) {
-        const userData = await res.json();
+    const [userData, skillsData] = await Promise.all([
+      loadRecord(`/api/users/${userId}`),
+      loadRecord('/api/skills')
+    ]);
+    
+    if (skillsData) {
+      this.availableSkills = skillsData.map(s => s.name);
+    }
+    
+    if (userData) {
         this.user.name = userData.name;
         this.user.email = userData.email;
-        this.user.skills = userData.skills || [];
-        this.skillsInput = this.user.skills.join(', ');
-      }
-    } catch (err) {
-      console.error('Error loading user:', err);
+        this.user.skills = Array.isArray(userData.skills) ? userData.skills : [];
     }
   },
   methods: {
+    toggleSkill(skill) {
+      if (this.user.skills.includes(skill)) {
+        this.user.skills = this.user.skills.filter(s => s !== skill);
+      } else {
+        this.user.skills.push(skill);
+      }
+    },
     async saveProfile() {
       const userId = authStore.state.userData?.id;
       
@@ -129,31 +149,30 @@ export default {
         return;
       }
       
-      const skills = this.skillsInput.split(',').map(s => s.trim()).filter(s => s);
-      const [firstName, ...lastNameParts] = this.user.name.split(' ');
-      const lastName = lastNameParts.join(' ');
-      
-      try {
-        const res = await fetch(`/api/users/${userId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            firstName,
-            lastName,
-            email: this.user.email,
-            skills
-          })
-        });
-        
-        if (res.ok) {
-          alert('Perfil actualizado correctamente');
-        }
-      } catch (err) {
-        console.error('Error updating profile:', err);
+      const updates = {
+        name: this.user.name,
+        email: this.user.email,
+        skills: this.user.skills
+      };
+
+      const result = await saveRecord(
+        `/api/users/${userId}`, 
+        'PUT', 
+        updates, 
+        'Perfil actualizado correctamente'
+      );
+
+      if (result) {
+          const updatedUser = { 
+              ...authStore.state.userData, 
+              ...updates 
+          };
+          authStore.methods.updateUserSession(updatedUser);
       }
     },
     changePassword() {
-      alert('Contraseña cambiada (simulado)');
+      // Future: Use dataHandler to call /api/users/:id/password
+      alert('Cambio de contraseña pendiente de implementación en backend');
       this.passwords = { current: '', new: '', confirm: '' };
     },
   },
@@ -221,5 +240,63 @@ export default {
 .back-to-profile {
   text-align: center;
   margin-top: 2rem;
+}
+
+.skills-selection {
+  margin-top: 0.5rem;
+}
+
+.available-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-card-bg);
+  min-height: 60px;
+}
+
+.skill-chip {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  background-color: var(--color-background);
+  border: 2px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  font-size: 0.9rem;
+}
+
+.skill-chip:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.skill-chip.selected {
+  background-color: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.skills-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.skills-header:hover {
+  background-color: var(--color-card-shadow);
+}
+
+.toggle-icon {
+  font-size: 0.8rem;
+  color: var(--color-text);
+  opacity: 0.7;
 }
 </style>

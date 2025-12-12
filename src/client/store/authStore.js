@@ -44,13 +44,25 @@ const methods = {
         const { isAuthenticated, userType, userData } = JSON.parse(savedAuth);
         if (isAuthenticated) {
           state.state.isAuthenticated = isAuthenticated;
-          state.state.userType = userType;
+          state.state.userType = userType || userData?.type || userData?.userType;
           state.state.userData = userData;
+          
+          if (!state.state.userType) {
+             console.warn('Invalid session found (no userType). Clearing auth.');
+             this.logout();
+             return;
+          }
+
+          if (state.state.userData && !state.state.userData.userType) {
+             state.state.userData.userType = state.state.userType;
+          }
+
           this.startInactivityTimer();
         }
       } catch (e) {
         console.error('Error parsing auth:', e);
         localStorage.removeItem('auth');
+        this.logout();
       }
     }
     
@@ -85,6 +97,17 @@ const methods = {
       alert('Tu sesión ha expirado por inactividad.');
       this.logout();
     }
+  },
+
+  updateUserSession(updates) {
+    if (!state.state.isAuthenticated) return;
+    
+    const newUserData = { ...state.state.userData, ...updates };
+    state.state.userData = newUserData;
+    
+    const authData = JSON.parse(localStorage.getItem('auth') || '{}');
+    authData.userData = newUserData;
+    localStorage.setItem('auth', JSON.stringify(authData));
   }
 };
 

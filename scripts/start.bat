@@ -29,7 +29,14 @@ for /f "tokens=*" %%i in ('docker compose ps ^| findstr "Up" 2^>nul') do (
 
 :continue
     echo Limpiando sesion...
-    docker compose down -v --remove-orphans >nul 2>&1
+    dir /b "..\database\data" 2>nul | findstr "^" >nul
+    if %errorlevel% equ 0 (
+        echo [INFO] Data persistente detectada en database\data.
+        echo [INFO] Iniciando con la base de datos existente...
+        set "DB_INIT_SCRIPT="
+        goto :run_compose
+    )
+
     goto :select_db_script
 
 :run_compose

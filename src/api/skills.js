@@ -17,4 +17,17 @@ router.get('/popular', async (req, res) => {
     }
 });
 
+router.get('/', async (req, res) => {
+    try {
+        const result = await sql.query`
+            SELECT SkillID as id, SkillName as name
+            FROM Skills
+            ORDER BY SkillName ASC
+        `;
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;

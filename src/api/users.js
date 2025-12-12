@@ -3,6 +3,23 @@ import sql from 'mssql';
 
 const router = express.Router();
 
+router.get('/', async (req, res) => {
+    try {
+        const result = await sql.query`
+            SELECT UserID as id, FirstName as firstName, LastName as lastName,
+                   Email as email, 'client' as userType
+            FROM Users
+        `;
+        const users = result.recordset.map(user => ({
+            ...user,
+            name: `${user.firstName} ${user.lastName}`.trim()
+        }));
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -37,7 +54,16 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { firstName, lastName, email, skills } = req.body;
+        let { firstName, lastName, email, skills, name } = req.body;
+        
+        if (name && !firstName && !lastName) {
+            const nameParts = name.split(' ');
+            firstName = nameParts[0] || '';
+            lastName = nameParts.slice(1).join(' ') || '';
+        }
+        
+        firstName = firstName || '';
+        lastName = lastName || '';
         
         await sql.query`
             UPDATE Users
@@ -96,28 +122,49 @@ router.post('/login', async (req, res) => {
             SELECT UserID FROM Users WHERE Email = ${email}
         `;
         
-        if (userCheck.recordset.length === 0) {
-            return res.status(404).json({ 
-                error: 'No existe una cuenta asociada a este correo electrónico.' 
-            });
+        if (userCheck.recordset.length > 0) {
+            const result = await sql.query`
+                SELECT UserID as id, FirstName as firstName, LastName as lastName, Email as email, 'client' as userType
+                FROM Users
+                WHERE Email = ${email} AND Password = ${password}
+            `;
+            
+            if (result.recordset.length === 0) {
+                return res.status(401).json({ 
+                    error: 'El correo y la contraseña no coinciden.' 
+                });
+            }
+            
+            const user = result.recordset[0];
+            user.name = `${user.firstName} ${user.lastName}`.trim();
+            
+            return res.json(user);
         }
-        
-        const result = await sql.query`
-            SELECT UserID as id, FirstName as firstName, LastName as lastName, Email as email
-            FROM Users
-            WHERE Email = ${email} AND Password = ${password}
+
+        const companyCheck = await sql.query`
+            SELECT CompanyID FROM Companies WHERE Email = ${email}
         `;
-        
-        if (result.recordset.length === 0) {
-            return res.status(401).json({ 
-                error: 'El correo y la contraseña no coinciden.' 
-            });
+
+        if (companyCheck.recordset.length > 0) {
+             const result = await sql.query`
+                SELECT CompanyID as id, CompanyName as name, Email as email, 'company' as userType
+                FROM Companies
+                WHERE Email = ${email} AND Password = ${password}
+             `;
+             
+             if (result.recordset.length === 0) {
+                return res.status(401).json({ 
+                    error: 'El correo y la contraseña no coinciden.' 
+                });
+             }
+
+             return res.json(result.recordset[0]);
         }
         
-        const user = result.recordset[0];
-        user.name = `${user.firstName} ${user.lastName}`.trim();
-        
-        res.json(user);
+        return res.status(404).json({ 
+            error: 'No existe una cuenta asociada a este correo electrónico.' 
+        });
+
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

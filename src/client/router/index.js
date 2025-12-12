@@ -20,6 +20,11 @@ import CompanyRequests from '../views/company/CompanyRequests.vue';
 import CompanyRequestDetails from '../views/company/CompanyRequestDetails.vue';
 
 import AdminDashboard from '../views/admin/AdminDashboard.vue';
+import AdminUsers from '../views/admin/AdminUsers.vue';
+import AdminJobs from '../views/admin/AdminJobs.vue';
+import AdminContent from '../views/admin/AdminContent.vue';
+import AdminHome from '../views/admin/AdminHome.vue';
+import authStore from '../store/authStore';
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -40,16 +45,45 @@ const routes = [
 
   { path: '/clients', name: 'Clients', component: Clients },
   { path: '/company/requests', name: 'CompanyRequests', component: CompanyRequests },
+  { 
+    path: '/company/edit', 
+    name: 'EditCompany', 
+    component: () => import('../views/EditCompany.vue'),
+    meta: { requiresAuth: true, userType: 'company' }
+  },
   { path: '/company/profile/:id', name: 'CompanyProfileView', component: CompanyProfile },
   { path: '/company/request/new', name: 'NewCompanyRequest', component: CompanyRequestDetails },
   { path: '/company/request/:id', name: 'CompanyRequestDetails', component: CompanyRequestDetails },
 
-  { path: '/admin', name: 'AdminDashboard', component: AdminDashboard },
+  { 
+    path: '/admin', 
+    component: AdminDashboard,
+    name: 'AdminDashboard',
+    meta: { requiresAdmin: true },
+    children: [
+      { path: '', name: 'AdminHome', component: AdminHome },
+      { path: 'users', name: 'AdminUsers', component: AdminUsers },
+      { path: 'jobs', name: 'AdminJobs', component: AdminJobs },
+      { path: 'content', name: 'AdminContent', component: AdminContent },
+    ]
+  },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+router.beforeEach((to, from, next) => {
+  if (to.matched.some(record => record.meta.requiresAdmin)) {
+    if (!authStore.state.isAuthenticated || authStore.state.userType !== 'admin') {
+      next('/');
+    } else {
+      next();
+    }
+  } else {
+    next();
+  }
 });
 
 export default router;

@@ -30,8 +30,9 @@ services:
     environment:
       SA_PASSWORD: "YourStrong(!)Password"
       ACCEPT_EULA: "Y"
+    user: "0:0"
     volumes:
-      - /var/opt/mssql
+      - ./database/data:/var/opt/mssql/data
 
 
 
