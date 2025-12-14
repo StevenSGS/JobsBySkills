@@ -44,6 +44,7 @@
               <td>{{ user.userType }}</td>
               <td>
                 <button class="action-btn edit" @click="editUser(user)">Editar</button>
+                <button class="action-btn delete" @click="confirmDeleteUser(user)">Eliminar</button>
               </td>
             </tr>
           </tbody>
@@ -70,6 +71,7 @@
               <td>{{ company.location || 'N/A' }}</td>
               <td>
                 <button class="action-btn edit" @click="editCompany(company)">Editar</button>
+                <button class="action-btn delete" @click="confirmDeleteCompany(company)">Eliminar</button>
               </td>
             </tr>
           </tbody>
@@ -118,16 +120,27 @@
         </template>
       </div>
     </BaseModal>
+    
+    <ConfirmModal
+      :show="showDeleteModal"
+      :title="deleteType === 'user' ? 'Eliminar Usuario' : 'Eliminar Empresa'"
+      :message="deleteType === 'user' ? '¿Estás seguro de eliminar este usuario?' : '¿Estás seguro de eliminar esta empresa?'"
+      variant="danger"
+      confirmButtonText="Eliminar"
+      @confirm="executeDelete"
+      @cancel="showDeleteModal = false"
+    />
   </div>
 </template>
 
 <script>
 import BaseModal from '../../components/BaseModal.vue';
+import ConfirmModal from '../../components/ConfirmModal.vue';
 import { loadRecord, saveRecord } from '../../utils/dataHandler';
 
 export default {
   name: 'AdminUsers',
-  components: { BaseModal },
+  components: { BaseModal, ConfirmModal },
   data() {
     return {
       activeTab: 'users',
@@ -136,6 +149,9 @@ export default {
       isLoading: false,
       error: '',
       showModal: false,
+      showDeleteModal: false,
+      deleteType: null,
+      deletingItem: null,
       editingItem: null,
       form: {}
     };
@@ -157,6 +173,31 @@ export default {
       if (companiesData) this.companies = companiesData;
       
       this.isLoading = false;
+    },
+    viewProfile(userId) {
+      this.$router.push(`/user/${userId}`);
+    },
+    confirmDeleteUser(user) {
+      this.deletingItem = user;
+      this.deleteType = 'user';
+      this.showDeleteModal = true;
+    },
+    confirmDeleteCompany(company) {
+      this.deletingItem = company;
+      this.deleteType = 'company';
+      this.showDeleteModal = true;
+    },
+    async executeDelete() {
+      try {
+        const endpoint = this.deleteType === 'user' ? 'users' : 'companies';
+        await fetch(`/api/${endpoint}/${this.deletingItem.id}`, { method: 'DELETE' });
+        this.showDeleteModal = false;
+        this.deletingItem = null;
+        this.deleteType = null;
+        await this.fetchData();
+      } catch (err) {
+        this.error = 'Error al eliminar';
+      }
     },
     editUser(user) {
       this.editingItem = { ...user, type: 'user' };

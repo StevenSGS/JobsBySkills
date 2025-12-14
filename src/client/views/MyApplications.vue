@@ -10,7 +10,10 @@
             <p class="application-date">Postulado el: {{ app.date }}</p>
           </div>
           <div class="app-status">
-            <span :class="['status-tag', app.status.toLowerCase()]">{{ app.status }}</span>
+            <span :class="['status-tag', getStatusClass(app.status)]">{{ app.status }}</span>
+          </div>
+          <div class="app-actions">
+            <button class="delete-btn" @click="confirmDelete(app)">Eliminar</button>
           </div>
         </div>
       </div>
@@ -23,12 +26,23 @@
         </router-link>
       </div>
     </BaseCard>
+    
+    <ConfirmModal
+      :show="showDeleteModal"
+      title="Eliminar Postulación"
+      message="¿Estás seguro de que deseas eliminar esta postulación?"
+      variant="danger"
+      confirmButtonText="Eliminar"
+      @confirm="deleteApplication"
+      @cancel="showDeleteModal = false"
+    />
   </div>
 </template>
 
 <script>
 import BaseCard from '../components/BaseCard.vue';
 import BaseButton from '../components/BaseButton.vue';
+import ConfirmModal from '../components/ConfirmModal.vue';
 import authStore from '../store/authStore';
 
 export default {
@@ -36,10 +50,13 @@ export default {
   components: {
     BaseCard,
     BaseButton,
+    ConfirmModal,
   },
   data() {
     return {
       applications: [],
+      showDeleteModal: false,
+      deletingApp: null,
     };
   },
   async mounted() {
@@ -59,6 +76,31 @@ export default {
       console.error('Error loading applications:', err);
     }
   },
+  methods: {
+    getStatusClass(status) {
+      const statusMap = {
+        'Pendiente': 'pendiente',
+        'Revisando': 'revisando',
+        'Aceptada': 'aceptada',
+        'Rechazada': 'rechazada'
+      };
+      return statusMap[status] || 'pendiente';
+    },
+    confirmDelete(app) {
+      this.deletingApp = app;
+      this.showDeleteModal = true;
+    },
+    async deleteApplication() {
+      try {
+        await fetch(`/api/applications/${this.deletingApp.id}`, { method: 'DELETE' });
+        this.applications = this.applications.filter(a => a.id !== this.deletingApp.id);
+        this.showDeleteModal = false;
+        this.deletingApp = null;
+      } catch (err) {
+        console.error('Error deleting application:', err);
+      }
+    }
+  }
 };
 </script>
 

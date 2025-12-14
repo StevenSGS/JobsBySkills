@@ -93,11 +93,12 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='BlogPosts' and xtype='U')
 CREATE TABLE BlogPosts (
     PostID INT PRIMARY KEY IDENTITY(1,1),
     Title VARCHAR(300) NOT NULL,
-    Author VARCHAR(100),
-    PublishedDate VARCHAR(50),
+    AuthorID INT,
+    PublishedDate DATETIME DEFAULT GETDATE(),
     Excerpt TEXT,
     Content TEXT,
-    CreatedAt DATETIME DEFAULT GETDATE()
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (AuthorID) REFERENCES Users(UserID) ON DELETE CASCADE
 );
 
 IF (SELECT COUNT(*) FROM Skills) = 0
@@ -149,7 +150,11 @@ BEGIN
     INSERT INTO Users (FirstName, LastName, Email, Password) VALUES 
     ('Ryan', 'Smith', 'ryan.smith@example.com', '12345678'),
     ('Juan', 'Perez', 'juan.perez@example.com', '12345678'),
-    ('Admin', 'Root', 'admin', 'admin');
+    ('Admin', 'Root', 'admin', 'admin'),
+    ('Javier', 'Martín', 'javier.martin@jobsbyskills.com', '12345678'),
+    ('Sofía', 'López', 'sofia.lopez@jobsbyskills.com', '12345678'),
+    ('Carlos', 'Ruiz', 'carlos.ruiz@jobsbyskills.com', '12345678'),
+    ('Ana', 'García', 'ana.garcia@jobsbyskills.com', '12345678');
 END
 
 IF (SELECT COUNT(*) FROM Companies) = 0
@@ -247,24 +252,28 @@ IF (SELECT COUNT(*) FROM UserSkills) = 0
 BEGIN
     INSERT INTO UserSkills (UserID, SkillID) VALUES 
     (1, 4), (1, 1),
-    (2, 4), (2, 1), (2, 10), (2, 11), (2, 5), (2, 6);
+    (2, 4), (2, 1), (2, 10), (2, 11), (2, 5), (2, 6),
+    (4, 1), (4, 5), (4, 6),
+    (5, 8), (5, 23), (5, 24),
+    (6, 9), (6, 23), (6, 26),
+    (7, 1), (7, 3), (7, 4);
 END
 
 IF (SELECT COUNT(*) FROM Applications) = 0
 BEGIN
     INSERT INTO Applications (UserID, JobID, Status, AppliedAt) VALUES 
-    (2, 1, 'En Revisión', '2025-11-10'),
-    (2, 2, 'Entrevista', '2025-11-05'),
-    (2, 3, 'Rechazado', '2025-11-01'),
-    (2, 1, 'Enviada', '2025-11-15'),
-    (2, 2, 'En Revisión', '2025-11-10'),
-    (2, 3, 'Rechazada', '2025-11-01');
+    (1, 1, 'Pendiente', '2025-11-15'),
+    (1, 6, 'Revisando', '2025-11-12'),
+    (2, 1, 'Revisando', '2025-11-10'),
+    (2, 2, 'Aceptada', '2025-11-05'),
+    (2, 3, 'Rechazada', '2025-11-01'),
+    (2, 4, 'Pendiente', '2025-11-08');
 END
 
 IF (SELECT COUNT(*) FROM BlogPosts) = 0
 BEGIN
-    INSERT INTO BlogPosts (Title, Author, PublishedDate, Excerpt, Content) VALUES 
-    ('Introducción a las Bases de Datos NoSQL para Desarrolladores SQL', 'Javier Martín', '28 Oct, 2025', 'Si vienes del mundo SQL, las bases de datos NoSQL pueden parecer un universo diferente. Te damos una guía de iniciación para facilitar tu transición.', '
+    INSERT INTO BlogPosts (Title, AuthorID, PublishedDate, Excerpt, Content) VALUES 
+    ('Introducción a las Bases de Datos NoSQL para Desarrolladores SQL', 4, '2025-10-28', 'Si vienes del mundo SQL, las bases de datos NoSQL pueden parecer un universo diferente. Te damos una guía de iniciación para facilitar tu transición.', '
            <p>Si vienes del mundo SQL, moverte a NoSQL es casi como cambiar de idioma mental. En SQL todo es muy ordenado: tablas con columnas estrictas, relaciones definidas y un esquema fijo. En cambio, NoSQL te deja modelar los datos con mucha más libertad, permitiéndote guardar información sin un formato rígido y adaptándose mucho mejor cuando una app crece rápido o recibe miles de solicitudes simultáneamente.</p>
 
 <h3>¿Qué es NoSQL exactamente?</h3>
@@ -289,7 +298,7 @@ BEGIN
 <h3>¿Cuál deberías usar?</h3>
 <p>SQL sigue siendo ideal cuando tu aplicación necesita transacciones seguras y relaciones complejas entre datos, como un sistema bancario. NoSQL es mejor cuando tus datos cambian de forma seguido, cuando tu app necesita escalar rápido o cuando el volumen de información es enorme y necesitas mantener el rendimiento.</p>
           '),
-    ('Trabajo Remoto: Ventajas y Desafíos', 'Sofía López', '01 Nov, 2025', 'El trabajo remoto ha llegado para quedarse. Analizamos los pros y los contras de esta modalidad y cómo puedes adaptarte con éxito.', '
+    ('Trabajo Remoto: Ventajas y Desafíos', 5, '2025-11-01', 'El trabajo remoto ha llegado para quedarse. Analizamos los pros y los contras de esta modalidad y cómo puedes adaptarte con éxito.', '
   <p>El trabajo remoto ha crecido como una nube que se expande sin hacer ruido, llevando a la gente a vivir una mezcla rara de libertad y presión, donde la ventaja de estar en casa se junta con la sensación extraña de estar siempre disponible, como si el tiempo y el espacio se volvieran planos y el hogar se transformara en oficina y la oficina en sombra mental; y mientras muchos celebran la facilidad de evitar traslados y la comodidad de un entorno familiar, otros sienten un desafío invisible hecho de distracciones suaves, silencios largos y una constante confusión entre vida y labor, generando un equilibrio frágil que parece simple pero se mueve con complejidad oculta.</p>
 
   <h3>Ventajas del Trabajo Remoto</h3>
@@ -314,7 +323,7 @@ BEGIN
     <li>Riesgo de trabajar más horas sin darse cuenta.</li>
   </ul>
 '),
-    ('Cómo Preparar tu Perfil para Atraer a los Mejores Reclutadores', 'Carlos Ruiz', '05 Nov, 2025', 'Tu perfil es tu carta de presentación. Aprende a optimizarlo para que no pase desapercibido por las empresas más importantes del sector.', '
+    ('Cómo Preparar tu Perfil para Atraer a los Mejores Reclutadores', 6, '2025-11-05', 'Tu perfil es tu carta de presentación. Aprende a optimizarlo para que no pase desapercibido por las empresas más importantes del sector.', '
             <p>Tu perfil en una plataforma de empleo es tu escaparate profesional. Aquí te dejamos algunos consejos para que brille:</p>
             <h3>Define tus Habilidades Clave</h3>
             <p>No te limites a listar tecnologías. Añade habilidades blandas y duras que te definan. Sé específico. En lugar de "JavaScript", puedes poner "JavaScript (ES6+), TypeScript, Node.js".</p>
@@ -323,7 +332,7 @@ BEGIN
             <h3>Mantén tu Perfil Actualizado</h3>
             <p>Añade nuevos proyectos, habilidades y experiencias laborales tan pronto como las adquieras. Un perfil activo demuestra interés y compromiso.</p>
           '),
-    ('5 Habilidades Clave que todo Desarrollador Frontend Necesita en 2025', 'Ana García', '10 Nov, 2025', 'El mundo del desarrollo frontend evoluciona rápidamente. Descubre las 5 habilidades que te mantendrán relevante y competitivo en el mercado actual.', '
+    ('5 Habilidades Clave que todo Desarrollador Frontend Necesita en 2025', 7, '2025-11-10', 'El mundo del desarrollo frontend evoluciona rápidamente. Descubre las 5 habilidades que te mantendrán relevante y competitivo en el mercado actual.', '
             <h3>1. Dominio de un Framework Moderno (y sus fundamentos)</h3>
             <p>Ya sea React, Vue.js o Angular, es crucial no solo saber usar un framework, sino entender cómo funciona por debajo. Conocer los principios de la reactividad, el renderizado y la gestión del estado te hará un desarrollador mucho más sólido.</p>
             <h3>2. Competencia en TypeScript</h3>

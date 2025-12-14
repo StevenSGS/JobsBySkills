@@ -133,4 +133,14 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await sql.query`DELETE FROM Companies WHERE CompanyID = ${id}`;
+        res.json({ message: 'Company deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;

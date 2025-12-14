@@ -39,13 +39,32 @@
           Aún no has aplicado a ningún empleo. ¡Explora nuestras ofertas!
         </p>
       </div>
+      
+      <div class="danger-zone">
+        <h3>Zona de Peligro</h3>
+        <p class="danger-warning">Esta acción es permanente y no se puede deshacer.</p>
+        <BaseButton type="danger" @click="confirmDeleteAccount">Eliminar Mi Cuenta</BaseButton>
+      </div>
     </BaseCard>
+    
+    <ConfirmModal
+      :show="showDeleteModal"
+      title="Eliminar Cuenta"
+      message="Esta acción eliminará permanentemente tu cuenta y todos tus datos. Para confirmar, escribe 'ELIMINAR' a continuación."
+      variant="danger"
+      :requireConfirmText="true"
+      confirmText="ELIMINAR"
+      confirmButtonText="Eliminar Cuenta"
+      @confirm="deleteAccount"
+      @cancel="showDeleteModal = false"
+    />
   </div>
 </template>
 
 <script>
 import BaseCard from '../components/BaseCard.vue';
 import BaseButton from '../components/BaseButton.vue';
+import ConfirmModal from '../components/ConfirmModal.vue';
 import authStore from '../store/authStore';
 
 export default {
@@ -53,6 +72,7 @@ export default {
   components: {
     BaseCard,
     BaseButton,
+    ConfirmModal,
   },
   data() {
     return {
@@ -62,6 +82,7 @@ export default {
         skills: [],
       },
       applications: [],
+      showDeleteModal: false,
     };
   },
   async mounted() {
@@ -84,9 +105,24 @@ export default {
         this.applications = await appsRes.json();
       }
     } catch (err) {
-      console.error('Error loading profile:', err);
+      console.error('Error loading applications:', err);
     }
   },
+  methods: {
+    confirmDeleteAccount() {
+      this.showDeleteModal = true;
+    },
+    async deleteAccount() {
+      this.showDeleteModal = false;
+      try {
+        const userId = authStore.state.userData?.id;
+        await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+        authStore.logout();
+      } catch (err) {
+        console.error('Error deleting account:', err);
+      }
+    }
+  }
 };
 </script>
 
