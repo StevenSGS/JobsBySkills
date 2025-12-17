@@ -1,10 +1,13 @@
-import express from 'express';
-import sql from 'mssql';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import express from "express";
+import sql from "mssql";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { createServer as createViteServer } from 'vite';
-import apiRoutes from './api/routes.js';
+import { configureRoutes } from './api/routes.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -13,155 +16,179 @@ const port = 3000;
 app.use(express.json());
 
 const dbConfig = {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    server: process.env.DB_SERVER,
-    database: process.env.DB_DATABASE,
-    port: parseInt(process.env.DB_PORT, 10),
-    options: {
-        encrypt: true,
-        trustServerCertificate: true
-    }
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_SERVER,
+  database: process.env.DB_DATABASE,
+  port: parseInt(process.env.DB_PORT, 10),
+  options: {
+    encrypt: true,
+    trustServerCertificate: true,
+  },
 };
 
 let dbConnection;
 
 const ensureDbExists = async (retries = 15) => {
-    while (retries > 0) {
-        console.log('Verificando DB...');
-        const masterDbConfig = { ...dbConfig, database: 'master' };
-        let pool;
-        try {
-            pool = await sql.connect(masterDbConfig);
-            const dbName = dbConfig.database;
-            const checkDbQuery = `IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = '${dbName}') CREATE DATABASE [${dbName}];`;
-            await pool.request().query(checkDbQuery);
-            console.log('DB correcta.');
-            return;
-        } catch (err) {
-            console.error('Fallo al verificar DB. Reintentando...');
-            retries--;
-            if (retries === 0) throw err;
-            await new Promise(res => setTimeout(res, 10000));
-        } finally {
-            if (pool) {
-                await pool.close();
-            }
-        }
+  while (retries > 0) {
+    console.log("Verificando DB...");
+    const masterDbConfig = { ...dbConfig, database: "master" };
+    let pool;
+    try {
+      pool = await sql.connect(masterDbConfig);
+      const dbName = dbConfig.database;
+      const checkDbQuery = `IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = '${dbName}') CREATE DATABASE [${dbName}];`;
+      await pool.request().query(checkDbQuery);
+      console.log("DB correcta.");
+      return;
+    } catch (err) {
+      console.error("Fallo al verificar DB. Reintentando...");
+      retries--;
+      if (retries === 0) throw err;
+      await new Promise((res) => setTimeout(res, 10000));
+    } finally {
+      if (pool) {
+        await pool.close();
+      }
     }
+  }
 };
 
 const connectWithRetry = async (retries = 15) => {
-    while (retries > 0) {
-        try {
-            console.log('Conectando a la DB...');
-            dbConnection = await sql.connect(dbConfig);
-            console.log('Conexion DB correcta.');
-            return;
-        } catch (err) {
-            console.error('Fallo la conexion. Reintentando...');
-            retries--;
-            if (retries === 0) throw err;
-            console.log(`Reintentando... (${retries})`);
-            await new Promise(res => setTimeout(res, 10000));
-        }
+  while (retries > 0) {
+    try {
+      console.log("Conectando a la DB...");
+      dbConnection = await sql.connect(dbConfig);
+      console.log("Conexion DB correcta.");
+      return;
+    } catch (err) {
+      console.error("Fallo la conexion. Reintentando...");
+      retries--;
+      if (retries === 0) throw err;
+      console.log(`Reintentando... (${retries})`);
+      await new Promise((res) => setTimeout(res, 10000));
     }
+  }
 };
 
 const initializeDatabase = async () => {
-    const initScriptPath = process.env.DB_INIT_SCRIPT;
-    if (!initScriptPath) {
-        console.log('No se obtuvo el script de inicializacion (DB_INIT_SCRIPT).');
-        return;
+  const initScriptPath = process.env.DB_INIT_SCRIPT;
+  if (!initScriptPath) {
+    console.log("No se obtuvo el script de inicializacion (DB_INIT_SCRIPT).");
+    return;
+  }
+
+  try {
+    const tableCheck = await dbConnection
+      .request()
+      .query(
+        "SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
+      );
+
+    if (tableCheck.recordset[0].count > 0) {
+      console.log("La base de datos está inicializada.");
+      return;
     }
 
-    try {
-        const tableCheck = await dbConnection.request()
-            .query("SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'");
-
-        if (tableCheck.recordset[0].count > 0) {
-            console.log('La base de datos está inicializada.');
-            return;
-        }
-
-        console.log(`Inicializando la base de datos con el script: ${initScriptPath}`);
-        const initSql = fs.readFileSync(initScriptPath, 'utf8');
-        await dbConnection.request().query(initSql);
-        console.log('Script de inicializacion de la base de datos ejecutado con exito.');
-
-    } catch (err) {
-        console.error(`Error al ejecutar el script de inicializacion de la base de datos: ${err.message}`);
-        throw err;
-    }
+    console.log(
+      `Inicializando la base de datos con el script: ${initScriptPath}`
+    );
+    const initSql = fs.readFileSync(initScriptPath, "utf8");
+    await dbConnection.request().query(initSql);
+    console.log(
+      "Script de inicializacion de la base de datos ejecutado con exito."
+    );
+  } catch (err) {
+    console.error(
+      `Error al ejecutar el script de inicializacion de la base de datos: ${err.message}`
+    );
+    throw err;
+  }
 };
 
-app.get('/api/db-test', async (req, res) => {
-    if (!dbConnection || !dbConnection.connected) {
-        return res.status(500).send('La conexion a la base de datos no esta activa.');
+app.get("/api/db-test", async (req, res) => {
+  if (!dbConnection || !dbConnection.connected) {
+    return res
+      .status(500)
+      .send("La conexion a la base de datos no esta activa.");
+  }
+
+  try {
+    const dbState = {};
+    const tablesResult = await dbConnection
+      .request()
+      .query(
+        "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_CATALOG = db_name()"
+      );
+
+    const tableNames = tablesResult.recordset.map((row) => row.TABLE_NAME);
+
+    for (const tableName of tableNames) {
+      const columnsResult = await dbConnection
+        .request()
+        .input("tableName", sql.NVarChar, tableName)
+        .query(
+          "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName"
+        );
+
+      const dataResult = await dbConnection
+        .request()
+        .query(`SELECT * FROM ${tableName}`);
+
+      dbState[tableName] = {
+        columns: columnsResult.recordset,
+        data: dataResult.recordset,
+      };
     }
 
-    try {
-        const dbState = {};
-        const tablesResult = await dbConnection.request()
-            .query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_CATALOG = db_name()");
-        
-        const tableNames = tablesResult.recordset.map(row => row.TABLE_NAME);
-
-        for (const tableName of tableNames) {
-            const columnsResult = await dbConnection.request()
-                .input('tableName', sql.NVarChar, tableName)
-                .query('SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName');
-            
-            const dataResult = await dbConnection.request().query(`SELECT * FROM ${tableName}`);
-
-            dbState[tableName] = {
-                columns: columnsResult.recordset,
-                data: dataResult.recordset
-            };
-        }
-
-        res.json(dbState);
-
-    } catch (err) {
-        res.status(500).json({ error: 'Error al consultar la base de datos', details: err.message });
-    }
+    res.json(dbState);
+  } catch (err) {
+    res
+      .status(500)
+      .json({
+        error: "Error al consultar la base de datos",
+        details: err.message,
+      });
+  }
 });
 
 async function startServer() {
-    try {
-        console.log('Iniciando...');
-        await ensureDbExists();
-        await connectWithRetry();
-        await initializeDatabase();
+  try {
+    console.log("Iniciando...");
+    await ensureDbExists();
+    await connectWithRetry();
+    await initializeDatabase();
 
-        app.use('/api', apiRoutes);
+    app.use('/api', configureRoutes(dbConnection));
 
-        if (process.env.NODE_ENV !== 'production') {
-            const vite = await createViteServer({
-                server: { middlewareMode: true },
-                appType: 'custom'
-            });
-            app.use(vite.middlewares);
-        } else {
-            app.use(express.static(path.resolve(__dirname, '../dist')));
-        }
-        
-        app.use('*', (req, res, next) => {
-            if (req.originalUrl.startsWith('/api')) {
-                return next();
-            }
-            res.sendFile(path.resolve(__dirname, '..', 'index.html'));
-        });
-
-        app.listen(port, () => {
-            console.log(`Servidor activo en http://localhost:${port}`);
-            console.log('Servidor ejecutandose.');
-        });
-
-    } catch (err) {
-        console.error('No se pudo conectar o inicializar la base de datos o iniciar el servidor de desarrollo. El servidor no se puede iniciar.', err);
-        process.exit(1);
+    if (process.env.NODE_ENV !== "production") {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "custom",
+      });
+      app.use(vite.middlewares);
+    } else {
+      app.use(express.static(path.resolve(__dirname, "../dist")));
     }
+
+    app.use("*", (req, res, next) => {
+      if (req.originalUrl.startsWith("/api")) {
+        return next();
+      }
+      res.sendFile(path.resolve(__dirname, "..", "index.html"));
+    });
+
+    app.listen(port, () => {
+      console.log(`Servidor activo en http://localhost:${port}`);
+      console.log("Servidor ejecutandose.");
+    });
+  } catch (err) {
+    console.error(
+      "No se pudo conectar o inicializar la base de datos o iniciar el servidor de desarrollo. El servidor no se puede iniciar.",
+      err
+    );
+    process.exit(1);
+  }
 }
 
 startServer();

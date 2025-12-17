@@ -72,7 +72,10 @@
       </form>
 
       <div v-if="!isNewRequest && applicants.length > 0" class="applicants-section">
-        <h3>Postulantes ({{ applicants.length }})</h3>
+        <div class="applicants-header">
+          <h3>Postulantes ({{ applicants.length }})</h3>
+          <BaseButton type="primary" @click="filterWithAI">Filtrar con IA</BaseButton>
+        </div>
         <div class="applicants-list">
           <div v-for="applicant in applicants" :key="applicant.id" class="applicant-card">
             <div class="applicant-info">
@@ -113,6 +116,27 @@
       @confirm="deleteJob"
       @cancel="showDeleteModal = false"
     />
+
+    <BaseModal v-if="showAiResultsModal" @close="closeAiModal" title="Análisis de Candidatos por IA">
+      <div v-if="isAiLoading" class="loading-spinner-container">
+        <div class="spinner"></div>
+        <p>Analizando candidatos...</p>
+      </div>
+      <div v-else-if="aiError" class="error-message">
+        <p>Hubo un error al procesar la solicitud:</p>
+        <p>{{ aiError }}</p>
+      </div>
+      <div v-else-if="aiResults.length > 0" class="ai-results-list">
+        <div v-for="(result, index) in aiResults" :key="result.userId" class="ai-candidate-card">
+          <div class="rank-badge">{{ index + 1 }}</div>
+          <div class="ai-candidate-info">
+            <h4>{{ result.name }}</h4>
+            <p>{{ result.justificacion }}</p>
+          </div>
+        </div>
+      </div>
+      <p v-else>No se encontraron resultados.</p>
+    </BaseModal>
   </div>
 </template>
 
@@ -121,6 +145,7 @@ import BaseCard from '../../components/BaseCard.vue';
 import BaseButton from '../../components/BaseButton.vue';
 import InputField from '../../components/InputField.vue';
 import ConfirmModal from '../../components/ConfirmModal.vue';
+import BaseModal from '../../components/BaseModal.vue';
 import authStore from '../../store/authStore';
 import { saveRecord, loadRecord } from '../../utils/dataHandler';
 
@@ -131,6 +156,7 @@ export default {
     BaseButton,
     InputField,
     ConfirmModal,
+    BaseModal,
   },
   data() {
     return {
@@ -149,6 +175,10 @@ export default {
       applicants: [],
       viewingProfile: null,
       showDeleteModal: false,
+      showAiResultsModal: false,
+      isAiLoading: false,
+      aiResults: [],
+      aiError: null,
     };
   },
   computed: {
@@ -264,6 +294,44 @@ export default {
       } catch (err) {
         console.error('Error deleting job:', err);
       }
+    },
+    async filterWithAI() {
+      this.showAiResultsModal = true;
+      this.isAiLoading = true;
+      this.aiError = null;
+      
+      try {
+        const response = await fetch('/api/ai/match-candidates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId: this.request.id })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Error del servidor');
+        }
+        
+        const rankedResults = await response.json();
+        
+        this.aiResults = rankedResults.map(result => {
+          const applicant = this.applicants.find(a => a.userId === result.userId);
+          return {
+            ...result,
+            name: applicant ? applicant.name : 'Candidato Desconocido',
+          };
+        });
+        
+      } catch (err) {
+        this.aiError = err.message;
+      } finally {
+        this.isAiLoading = false;
+      }
+    },
+    closeAiModal() {
+      this.showAiResultsModal = false;
+      this.aiResults = [];
+      this.aiError = null;
     }
   },
 };
@@ -498,5 +566,74 @@ export default {
 .status-select:focus {
   outline: none;
   border-color: var(--color-primary);
+}
+
+.applicants-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.loading-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 150px;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border-left-color: var(--color-primary);
+  animation: spin 1s ease infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ai-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ai-candidate-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--color-background);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.rank-badge {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.ai-candidate-info h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.ai-candidate-info p {
+  margin: 0;
+  opacity: 0.9;
 }
 </style>
