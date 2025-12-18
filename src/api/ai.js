@@ -95,7 +95,7 @@ router.post("/match-candidates", async (req, res) => {
       const response = await axios.post(
         "https://openrouter.ai/api/v1/chat/completions",
         {
-          model: "z-ai/glm-4.5-air:free",
+          model: "google/gemma-3-12b-it:free",
           messages: [{ role: "user", content: prompt }],
         },
         {
@@ -123,12 +123,9 @@ router.post("/match-candidates", async (req, res) => {
         "Error al llamar a la API de OpenRouter o al procesar su respuesta:",
         apiError.response ? apiError.response.data : apiError.message
       );
-      res
-        .status(500)
-        .json({
-          error:
-            "Fallo al contactar o procesar la respuesta del servicio de IA.",
-        });
+      res.status(500).json({
+        error: "Fallo al contactar o procesar la respuesta del servicio de IA.",
+      });
     }
   } catch (error) {
     console.error("Error en /match-candidates:", error);
