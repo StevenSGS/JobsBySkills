@@ -40,6 +40,19 @@ for /f "tokens=*" %%i in ('docker compose ps ^| findstr "Up" 2^>nul') do (
     goto :select_db_script
 
 :run_compose
+    rem API Key check
+    findstr /c:"OPENROUTER_API_KEY=" ..\.env >nul 2>nul
+    if %errorlevel% neq 0 (
+        echo.
+        set /p "OPENROUTER_API_KEY=Ingresa tu API Key de OpenRouter: "
+        if not "!OPENROUTER_API_KEY!"=="" (
+            echo OPENROUTER_API_KEY=!OPENROUTER_API_KEY!>> ..\.env
+            echo API Key guardada en .env
+        ) else (
+            echo ADVERTENCIA: No se ingresó la API Key de OpenRouter. Algunas funcionalidades de IA podrían no funcionar.
+        )
+    )
+
     echo Iniciando servicios...
     docker compose up --build
     goto :end

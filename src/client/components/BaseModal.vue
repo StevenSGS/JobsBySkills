@@ -93,6 +93,8 @@ export default {
 
 .modal-body {
   padding: 1.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .modal-footer {

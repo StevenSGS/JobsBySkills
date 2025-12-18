@@ -7,6 +7,7 @@ import companiesRoutes from './companies.js';
 import usersRoutes from './users.js';
 import applicationsRoutes from './applications.js';
 import adminRoutes from './admin.js';
+import { aiRoutes, setAiDbConnection } from './ai.js';
 
 const router = express.Router();
 
@@ -18,5 +19,10 @@ router.use('/companies', companiesRoutes);
 router.use('/users', usersRoutes);
 router.use('/applications', applicationsRoutes);
 router.use('/admin', adminRoutes);
+router.use('/ai', aiRoutes);
 
-export default router;
+export const configureRoutes = (dbConnection) => {
+    setAiDbConnection(dbConnection);
+    return router;
+};
+

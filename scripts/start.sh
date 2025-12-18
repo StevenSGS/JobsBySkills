@@ -115,6 +115,18 @@ else
         select_db_script
     fi
 
+    if ! grep -q "OPENROUTER_API_KEY=" ../.env 2>/dev/null; then
+        echo ""
+        read -s -p "Ingresa tu API Key de OpenRouter: " OPENROUTER_API_KEY
+        echo ""
+        if [ -n "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY=$OPENROUTER_API_KEY" >> ../.env
+            echo "API Key guardada en .env"
+        else
+            echo "ADVERTENCIA: No se ingresó la API Key de OpenRouter. Algunas funcionalidades de IA podrían no funcionar."
+        fi
+    fi
+
     echo "Iniciando servicios..."
     docker compose up --build
 fi
